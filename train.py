@@ -93,7 +93,7 @@ def main(args):
 
     model.train()
     criterion.train()
-
+    '''
     for epoch in range(args.epochs):
         losses = []
         trainMetrics = []
@@ -141,7 +141,67 @@ def main(args):
         trainMetrics = {k: torch.stack([m[k] for m in trainMetrics]).mean() for k in trainMetrics[0]}
         for k,v in trainMetrics.items():
             wandb.log({f"train/{k}": v.item()}, step=epoch * batches)
-        
+        '''
+
+    for epoch in range(args.epochs):
+        total_loss = 0.0
+        total_metrics = None  # Initialize total_metrics
+
+        for batch, (x, y) in enumerate(train_dataloader):
+            x = x.to(device)
+            y = [{k: v.to(device) for k, v in t.items()} for t in y]
+
+            if args.amp:
+                with amp.autocast():
+                    out = model(x)
+                # cast output to float to overcome amp training issue
+                out = cast2Float(out)
+            else:
+                out = model(x)
+
+            metrics = criterion(out, y)
+            print({k: v for k, v in metrics.items() if 'aux' not in k})
+
+            # Initialize total_metrics on the first batch
+            if total_metrics is None:
+                total_metrics = {k: 0.0 for k in metrics}
+
+            # Calculate mean values progressively
+            for k, v in metrics.items():
+                total_metrics[k] += v.item()
+
+            loss = sum(v for k, v in metrics.items() if 'loss' in k)
+            total_loss += loss.item()
+
+            # MARK: - print & save training details
+            print(f'Epoch {epoch} | {batch + 1} / {batches}')
+
+            # MARK: - backpropagation
+            optimizer.zero_grad()
+            if args.amp:
+                scaler.scale(loss).backward()
+                if args.clipMaxNorm > 0:
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clipMaxNorm)
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                if args.clipMaxNorm > 0:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clipMaxNorm)
+                optimizer.step()
+
+        # Calculate average loss and metrics
+        avg_loss = total_loss / len(train_dataloader)
+        avg_metrics = {k: v / len(train_dataloader) for k, v in total_metrics.items()}
+
+        lrScheduler.step()
+        wandb.log({"train/loss": avg_loss}, step=epoch * batches)
+        print(f'Epoch {epoch}, loss: {avg_loss:.8f}')
+
+        for k, v in avg_metrics.items():
+            wandb.log({f"train/{k}": v}, step=epoch * batches)
+
 
         # MARK: - validation
         if batch == batches - 1:

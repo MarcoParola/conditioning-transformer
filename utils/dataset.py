@@ -83,7 +83,7 @@ class MangoDataset(Dataset):
         else:
             targets = {
                 'boxes': torch.as_tensor(annotations[..., :-1], dtype=torch.float32),
-                'labels': torch.as_tensor(annotations[..., -1], dtype=torch.int64),
+                'labels': torch.as_tensor(annotations[..., -1], dtype=torch.int16),
             }
 
         imgW, imgH = torch.tensor(image.size, dtype=torch.float32)
@@ -201,22 +201,8 @@ class COCODataset(Dataset):
         self.root = root
         self.coco = COCO(annotation)
         self.ids = list(self.coco.imgs.keys())
-
-        #self.targetHeight = targetHeight
-        #self.targetWidth = targetWidth
         self.numClass = numClass
 
-        '''
-        self.transforms = T.Compose([
-            T.RandomOrder([
-                T.RandomHorizontalFlip(),
-                T.RandomSizeCrop(numClass)
-            ]),
-            T.Resize((targetHeight, targetWidth)),
-            T.ColorJitter(brightness=.2, contrast=.1, saturation=.1, hue=0),
-            T.Normalize()
-        ])
-        '''
         self.transforms = T.Compose([
             T.ToTensor()
         ])
@@ -270,33 +256,6 @@ class COCODataset(Dataset):
 
         return np.asarray(ans)
 
-
-'''
-class HarborfrontMetadataDataModule(pl.LightningDataModule):
-    def __init__(self, dataDir, trainAnnFile, valAnnFile, testAnnFile, batch_size=32, numWorkers=1):
-        super().__init__()
-        self.train_dataset = COCODataset(dataDir, trainAnnFile, numClass)
-        self.val_dataset = COCODataset(dataDir, valAnnFile, numClass)
-        self.test_dataset = COCODataset(dataDir, testAnnFile, numClass)
-        self.batch = batch_size
-        self.numWorkers = numWorkers
-
-    def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch, shuffle=True, 
-            collate_fn=collateFunction, pin_memory=True, num_workers=self.numWorkers)
-
-    def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch, shuffle=False, 
-            collate_fn=collateFunction, pin_memory=True, num_workers=self.numWorkers)
-
-    def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch, shuffle=False, 
-            collate_fn=collateFunction, pin_memory=True, num_workers=self.numWorkers)
-
-    def predict_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch, shuffle=False, 
-            collate_fn=collateFunction, pin_memory=True, num_workers=self.numWorkers)
-'''
 
 def collateFunction(batch: List[Tuple[Tensor, dict]]) -> Tuple[Tensor, Tuple[Dict[str, Tensor]]]:
     batch = tuple(zip(*batch))

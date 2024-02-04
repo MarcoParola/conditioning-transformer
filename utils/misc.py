@@ -42,7 +42,7 @@ def baseParser() -> ArgumentParser:
     parser.add_argument('--lrBackbone', default=1e-5, type=float)
     parser.add_argument('--batchSize', default=8, type=int)
     parser.add_argument('--weightDecay', default=1e-4, type=float)
-    parser.add_argument('--epochs', default=10, type=int)
+    parser.add_argument('--epochs', default=15, type=int)
     parser.add_argument('--lrDrop', default=1000, type=int)
     parser.add_argument('--clipMaxNorm', default=.1, type=float)
 
@@ -61,7 +61,7 @@ def baseParser() -> ArgumentParser:
     # MARK: - miscellaneous
     parser.add_argument('--outputDir', default='./checkpoint', type=str)
     parser.add_argument('--taskName', default='mango', type=str)
-    parser.add_argument('--numWorkers', default=8, type=int)
+    parser.add_argument('--numWorkers', default=1, type=int)
     parser.add_argument('--multi', default=False, type=bool)
     parser.add_argument('--amp', default=False, type=bool)
 
