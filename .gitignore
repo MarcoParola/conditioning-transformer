@@ -386,3 +386,4 @@ test.py
 checkpoint/
 data/
 wandb/
+outputs/
