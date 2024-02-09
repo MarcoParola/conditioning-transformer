@@ -40,8 +40,17 @@ wandb login
 
 ## **Usage**
 
+
+
+To perform a training run:
 ```sh
-python -m scripts.dataset-stats --dataset data/Train.json # training set
-python -m scripts.dataset-stats --dataset data/Valid.json # validation set
-python -m scripts.dataset-stats --dataset data/Test.json # test set
+python train.py
 ```
+
+To run inference on test set to compute some metrics, specify the weight model path by setting `weight` parameter (I ususally download it from wandb and I copy it in `checkpoint` folder).
+```sh
+python evaluate.py weight=checkpoint/best.pt
+```
+
+## Acknowledgement
+Special thanks to [@clive819](https://github.com/clive819) for making an implementation of DETR public [here](https://github.com/clive819/Modified-DETR) .
