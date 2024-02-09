@@ -11,19 +11,20 @@ import hydra
 from models import DETR, SetCriterion
 from utils.dataset import collateFunction, COCODataset
 from utils.misc import baseParser, cast2Float
+from utils.utils import load_weights
 from tqdm import tqdm
 
 @hydra.main(config_path="config", config_name="config")
 def main(args):
-    print(args)
-    #wandb.init(entity=args.wandbEntity , project=args.wandbProject, config=args)
-
+    
+    args.wandbProject = args.wandbProject + '_eval'
+    wandb.init(entity=args.wandbEntity , project=args.wandbProject, config=dict(args))
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
     os.makedirs(args.outputDir, exist_ok=True)
 
     # load data
-    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass)
+    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, args.scaleMetadata)
     test_dataloader = DataLoader(test_dataset, 
         batch_size=args.batchSize, 
         shuffle=False, 
@@ -32,32 +33,23 @@ def main(args):
         num_workers=args.numWorkers)
     
     # load model
-    model = DETR(args).to(device)
     criterion = SetCriterion(args).to(device)
-    if args.weight:
-        print(f'loading pre-trained weights from {args.weight}')
+    model = DETR(args).to(device)
+    if args.weight != '':
         model_path = os.path.join(args.currentDir, args.weight)
-        model.load_state_dict(torch.load(model_path, map_location=device))
-    else:
-        print('no pre-trained weights found, training from scratch...')
-        return
+        model = load_weights(model, model_path, device)
     
     # multi-GPU training
     if args.multi:
         model = torch.nn.DataParallel(model)
 
-    
     model.eval()
     criterion.eval()
     with torch.no_grad():
         testMetrics = []
-        i=0 
 
-        # loop through test dataset using tqdm
-
-        for data in tqdm(test_dataloader):
+        for batch, data in enumerate(tqdm(test_dataloader)):
             x,y = data
-            i+=1
             x = x.to(device)
             y = [{k: v.to(device) for k, v in t.items()} for t in y]
             out = model(x)
@@ -66,17 +58,8 @@ def main(args):
 
         testMetrics = {k: torch.stack([m[k] for m in testMetrics]).mean() for k in testMetrics[0]}
         for k,v in testMetrics.items():
-            print(f"test/{k}: {v.item()}")
-    
-        '''
-        wandb.log({"val/loss": avgLoss}, step=epoch * batches)
-        for k,v in valMetrics.items():
-            wandb.log({f"val/{k}": v.item()}, step=batch + epoch * batches)
-        '''
+            wandb.log({f"test/{k}": v.item()}, step=0)
 
-
-
-        
-
+   
 if __name__ == '__main__':
     main()

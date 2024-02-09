@@ -8,10 +8,9 @@ from PIL import Image
 from pycocotools.coco import COCO
 from torch import Tensor
 from torch.utils.data.dataset import Dataset
-from torch.utils.data import DataLoader
 
 import utils.transforms as T
-
+import hydra
 
 
 class YOLODataset(Dataset):
@@ -118,12 +117,12 @@ class YOLODataset(Dataset):
 
 class COCODataset(Dataset):
     #def __init__(self, root: str, annotation: str, targetHeight: int, targetWidth: int, numClass: int):
-    def __init__(self, root: str, annotation: str, numClass: int):
+    def __init__(self, root: str, annotation: str, numClass: int, scaling_thresholds: Dict[str, Tuple[float, float]] = None):
         self.root = root
         self.coco = COCO(annotation)
         self.ids = list(self.coco.imgs.keys())
         self.numClass = numClass
-
+        self.scaling_thresholds = scaling_thresholds
         self.transforms = T.Compose([
             T.ToTensor()
         ])
@@ -134,36 +133,36 @@ class COCODataset(Dataset):
             self.newIndex[k] = i
             classes.append(v['name'])
 
+        '''
         with open('./checkpoint/classes.txt', 'w') as f:
             f.write(str(classes))
+        '''
 
     def __len__(self) -> int:
         return len(self.ids)
 
     def __getitem__(self, idx: int) -> Tuple[Tensor, dict]:
         imgID = self.ids[idx]
-
         imgInfo = self.coco.imgs[imgID]        
         imgPath = os.path.join(self.root, imgInfo['file_name'])
-
         image = Image.open(imgPath).convert('RGB')
+
         annotations = self.loadAnnotations(imgID, imgInfo['width'], imgInfo['height'])
         metadata = self.loadMetadata(imgID)
 
         if len(annotations) == 0:
             targets = {
                 'boxes': torch.zeros(1, 4, dtype=torch.float32),
-                'labels': torch.as_tensor([self.numClass], dtype=torch.int64),
-            }
+                'labels': torch.as_tensor([self.numClass], dtype=torch.int64),}
         else:
             targets = {
                 'boxes': torch.as_tensor(annotations[..., :-1], dtype=torch.float32),
-                'labels': torch.as_tensor(annotations[..., -1], dtype=torch.int64),
-            }
+                'labels': torch.as_tensor(annotations[..., -1], dtype=torch.int64),}
 
         image, targets = self.transforms(image, targets)
 
-        # TODO add metadata to return statement
+        # TODO 
+        #return image, metadata, targets
         return image, targets
 
     def loadAnnotations(self, imgID: int, imgWidth: int, imgHeight: int) -> np.ndarray:
@@ -184,18 +183,17 @@ class COCODataset(Dataset):
     def loadMetadata(self, imgID: int) -> np.ndarray:
         imgInfo = self.coco.imgs[imgID]
         metadata = imgInfo['meta']
-        # TODO scale each value to [0, 1]
+        timestamp = imgInfo['date_captured']
+        metadata['Hour'] = int(timestamp.split('T')[1].split(':')[0])
+        metadata['Month'] = int(timestamp.split('T')[0].split('-')[1])
+        metadata = self.scale_harborfront_metadata(metadata)
         metadata = np.array(list(metadata.values()))
+        return metadata
 
-        # extract month and hour from date and convert to float
-        date = imgInfo['date_captured']
-        date = date.split('T')
-        month = date[0].split('-')[1]
-        hour = date[1].split(':')[0]
-        month = float(month)
-        hour = float(hour)        
-        metadata = np.append(metadata, [month, hour])
-
+    def scale_harborfront_metadata(self, metadata: Dict[str, float]) -> Dict[str, float]:
+        metadata = metadata.copy()
+        for key, (min_val, max_val) in self.scaling_thresholds.items():
+            metadata[key] = (metadata[key] - min_val) / (max_val - min_val)
         return metadata
 
 
@@ -204,13 +202,17 @@ def collateFunction(batch: List[Tuple[Tensor, dict]]) -> Tuple[Tensor, Tuple[Dic
     return torch.stack(batch[0]), batch[1]
 
 
-if __name__ == '__main__':
 
+# TEST MAIN
+@hydra.main(config_path='../config', config_name='config')
+def main(args):
     data_folder = 'data'
-    data_file = 'data/Test.json'
+    data_folder = os.path.join(args.currentDir, data_folder)
+    data_file = 'data/small/Test.json'
+    data_file = os.path.join(args.currentDir, data_file)
     num_classes = 4
-    dataset = COCODataset(data_folder, data_file, num_classes)
-    
+    dataset = COCODataset(data_folder, data_file, num_classes, args.scaleMetadata)  
+   
     print(dataset.__len__())
     # plot 10 images using matplotlib
     import matplotlib.pyplot as plt
@@ -232,7 +234,7 @@ if __name__ == '__main__':
             h = h * img_h
             rect = patches.Rectangle((x,y), w,h, linewidth=1, edgecolor='r', facecolor='none')
             ax.add_patch(rect)
-
         plt.show()
     
-
+if __name__ == '__main__':
+    main()

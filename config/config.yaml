@@ -33,7 +33,7 @@ lr: 1e-6
 lrBackbone: 1e-5
 batchSize: 8
 weightDecay: 1e-4
-epochs: 40
+epochs: 10
 lrDrop: 1000
 clipMaxNorm: .1
 

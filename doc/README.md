@@ -21,6 +21,7 @@ python evaluate.py weight=path/to/model-weight
 ## Deep learning models
 
 ## Configuration handling
+The configuration managed with [Hydra](https://hydra.cc/). Every aspect of the configuration is located in `config/` folder. The file containing all the configuration is `config.yaml`.
 
 ## Additional utility scripts
 
