@@ -133,11 +133,6 @@ class COCODataset(Dataset):
             self.newIndex[k] = i
             classes.append(v['name'])
 
-        '''
-        with open('./checkpoint/classes.txt', 'w') as f:
-            f.write(str(classes))
-        '''
-
     def __len__(self) -> int:
         return len(self.ids)
 
@@ -160,10 +155,8 @@ class COCODataset(Dataset):
                 'labels': torch.as_tensor(annotations[..., -1], dtype=torch.int64),}
 
         image, targets = self.transforms(image, targets)
+        return image, metadata, targets
 
-        # TODO 
-        #return image, metadata, targets
-        return image, targets
 
     def loadAnnotations(self, imgID: int, imgWidth: int, imgHeight: int) -> np.ndarray:
         ans = []
@@ -187,54 +180,63 @@ class COCODataset(Dataset):
         metadata['Hour'] = int(timestamp.split('T')[1].split(':')[0])
         metadata['Month'] = int(timestamp.split('T')[0].split('-')[1])
         metadata = self.scale_harborfront_metadata(metadata)
-        metadata = np.array(list(metadata.values()))
+        metadata = torch.as_tensor(list(metadata.values()))
         return metadata
 
     def scale_harborfront_metadata(self, metadata: Dict[str, float]) -> Dict[str, float]:
         metadata = metadata.copy()
         for key, (min_val, max_val) in self.scaling_thresholds.items():
             metadata[key] = (metadata[key] - min_val) / (max_val - min_val)
+            # shift the range to [-2, 2]
+            metadata[key] = (metadata[key] - 0.5) * 4
         return metadata
 
-
+'''
 def collateFunction(batch: List[Tuple[Tensor, dict]]) -> Tuple[Tensor, Tuple[Dict[str, Tensor]]]:
     batch = tuple(zip(*batch))
     return torch.stack(batch[0]), batch[1]
+'''
+
+def collateFunction(batch: List[Tuple[Tensor, Tensor, dict]]) -> Tuple[Tensor, Tensor, Tuple[Dict[str, Tensor]]]:
+    batch = tuple(zip(*batch))
+    return torch.stack(batch[0]), torch.stack(batch[1]), batch[2]
+
 
 
 
 # TEST MAIN
 @hydra.main(config_path='../config', config_name='config')
 def main(args):
-    data_folder = 'data'
-    data_folder = os.path.join(args.currentDir, data_folder)
-    data_file = 'data/small/Test.json'
-    data_file = os.path.join(args.currentDir, data_file)
-    num_classes = 4
-    dataset = COCODataset(data_folder, data_file, num_classes, args.scaleMetadata)  
-   
-    print(dataset.__len__())
-    # plot 10 images using matplotlib
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
+    from torch.utils.data import DataLoader
 
-    # plot 10 images using matplotlib and draw the corresponding annotations with plt.rectangle
-    for i in range(10):
-        image, target = dataset.__getitem__(i)
+    num_classes = 4
+    data_folder = 'data'
+    data_file = 'data/small/Test.json'
+    data_folder = os.path.join(args.currentDir, data_folder)
+    data_file = os.path.join(args.currentDir, data_file)
+    dataset = COCODataset(data_folder, data_file, num_classes, args.scaleMetadata)  
+    dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collateFunction)
+    print(dataset.__len__())
+    
+    for images, metadata, targets in dataloader:
+        print(type(images), type(metadata), type(targets))
+        print(images.shape, metadata.shape, targets[0]['boxes'].shape, targets[0]['labels'].shape)
         
-        fig, ax = plt.subplots()
-        ax.imshow(image.permute(1, 2, 0))
+        for i in range(len(images)):
+            image, meta, target = images[i], metadata[i], targets[i]
+            fig, ax = plt.subplots()
+            ax.imshow(image.permute(1, 2, 0))
 
-        for i in range(len(target['boxes'])):
-            img_w, img_h = image.size(2), image.size(1)
-            x, y, w, h = target['boxes'][i]
-            x = x * img_w
-            y = y * img_h
-            w = w * img_w
-            h = h * img_h
-            rect = patches.Rectangle((x,y), w,h, linewidth=1, edgecolor='r', facecolor='none')
-            ax.add_patch(rect)
-        plt.show()
+            for i in range(len(target['boxes'])):
+                img_w, img_h = image.size(2), image.size(1)
+                x, y, w, h = target['boxes'][i]
+                x, y = x*img_w, y*img_h 
+                w, h = w*img_w, h*img_h
+                rect = patches.Rectangle((x,y), w,h, linewidth=1, edgecolor='r', facecolor='none')
+                ax.add_patch(rect)
+            plt.show()
     
 if __name__ == '__main__':
     main()

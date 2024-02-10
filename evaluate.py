@@ -48,12 +48,11 @@ def main(args):
     with torch.no_grad():
         testMetrics = []
 
-        for batch, data in enumerate(tqdm(test_dataloader)):
-            x,y = data
-            x = x.to(device)
-            y = [{k: v.to(device) for k, v in t.items()} for t in y]
-            out = model(x)
-            metrics = criterion(out, y)
+        for batch, (imgs, metadata, targets) in enumerate(tqdm(test_dataloader)):
+            imgs = imgs.to(device)
+            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+            out = model(imgs)
+            metrics = criterion(out, targets)
             testMetrics.append(metrics)
 
         testMetrics = {k: torch.stack([m[k] for m in testMetrics]).mean() for k in testMetrics[0]}

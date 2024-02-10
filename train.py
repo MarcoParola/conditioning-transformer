@@ -31,17 +31,15 @@ def main(args):
         batch_size=args.batchSize, 
         shuffle=True, 
         collate_fn=collateFunction, 
-        #pin_memory=True, 
         num_workers=args.numWorkers)
     
     val_dataloader = DataLoader(val_dataset, 
         batch_size=args.batchSize, 
         shuffle=False, 
         collate_fn=collateFunction,
-        #pin_memory=True, 
         num_workers=args.numWorkers)
     
-
+    # set model and criterion, load weights if available
     criterion = SetCriterion(args).to(device)
     model = DETR(args).to(device)
     if args.weight != '':
@@ -64,27 +62,27 @@ def main(args):
     prevBestLoss = np.inf
     batches = len(train_dataloader)
     scaler = amp.GradScaler()
-
     model.train()
     criterion.train()
+    
     for epoch in range(args.epochs):
         wandb.log({"epoch": epoch}, step=epoch * batches)
         total_loss = 0.0
         total_metrics = None  # Initialize total_metrics
 
         # MARK: - training
-        for batch, (x, y) in enumerate(tqdm(train_dataloader)):
-            x = x.to(device)
-            y = [{k: v.to(device) for k, v in t.items()} for t in y]
+        for batch, (imgs, metadata, targets) in enumerate(tqdm(train_dataloader)):
+            imgs = imgs.to(device)
+            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
             if args.amp:
                 with amp.autocast():
-                    out = model(x)
+                    out = model(imgs)
                 out = cast2Float(out) # cast output to float to overcome amp training issue
             else:
-                out = model(x)
+                out = model(imgs)
 
-            metrics = criterion(out, y)
+            metrics = criterion(out, targets)
             
             # Initialize total_metrics on the first batch
             if total_metrics is None:
@@ -131,12 +129,12 @@ def main(args):
             with torch.no_grad():
                 valMetrics = []
                 losses = []
-                for x, y in tqdm(val_dataloader):
-                    x = x.to(device)
-                    y = [{k: v.to(device) for k, v in t.items()} for t in y]
-                    out = model(x)
+                for imgs, metadata, targets in tqdm(val_dataloader):
+                    imgs = imgs.to(device)
+                    targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+                    out = model(imgs)
 
-                    metrics = criterion(out, y)
+                    metrics = criterion(out, targets)
                     valMetrics.append(metrics)
                     loss = sum(v for k, v in metrics.items() if 'loss' in k)
                     losses.append(loss.cpu().item())

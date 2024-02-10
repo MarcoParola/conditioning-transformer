@@ -33,7 +33,7 @@ lr: 1e-6
 lrBackbone: 1e-5
 batchSize: 8
 weightDecay: 1e-4
-epochs: 10
+epochs: 12
 lrDrop: 1000
 clipMaxNorm: .1
 
@@ -45,8 +45,8 @@ eosCost: .1
 
 # MARK: - dataset
 dataDir: ${hydra:runtime.cwd}/data
-trainAnnFile: ${hydra:runtime.cwd}/data/Train.json
-valAnnFile: ${hydra:runtime.cwd}/data/Valid.json
+trainAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
+valAnnFile: ${hydra:runtime.cwd}/data/small/Valid.json
 testAnnFile: ${hydra:runtime.cwd}/data/Test.json
 
 # MARK: - miscellaneous
