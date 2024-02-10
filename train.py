@@ -9,10 +9,10 @@ import wandb
 import hydra
 from tqdm import tqdm
 
-from models import DETR, SetCriterion
-from utils.dataset import collateFunction, COCODataset
-from utils.misc import baseParser, cast2Float
-from utils.utils import load_weights
+from src.models import DETR, SetCriterion
+from src.datasets import collateFunction, COCODataset
+from src.utils.misc import baseParser, cast2Float
+from src.utils.utils import load_weights
 
 @hydra.main(config_path="config", config_name="config")
 def main(args):
@@ -64,7 +64,7 @@ def main(args):
     scaler = amp.GradScaler()
     model.train()
     criterion.train()
-    
+
     for epoch in range(args.epochs):
         wandb.log({"epoch": epoch}, step=epoch * batches)
         total_loss = 0.0

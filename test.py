@@ -7,12 +7,13 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 import wandb
 import hydra
-
-from models import DETR, SetCriterion
-from utils.dataset import collateFunction, COCODataset
-from utils.misc import baseParser, cast2Float
-from utils.utils import load_weights
 from tqdm import tqdm
+
+from src.models import DETR, SetCriterion
+from src.datasets import collateFunction, COCODataset
+from src.utils.misc import baseParser, cast2Float
+from src.utils.utils import load_weights
+
 
 @hydra.main(config_path="config", config_name="config")
 def main(args):
