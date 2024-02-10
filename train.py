@@ -11,8 +11,9 @@ from tqdm import tqdm
 
 from src.models import DETR, SetCriterion
 from src.datasets import collateFunction, COCODataset
-from src.utils.misc import baseParser, cast2Float
 from src.utils.utils import load_weights
+from src.utils import baseParser, cast2Float
+from src.utils import EarlyStopping
 
 @hydra.main(config_path="config", config_name="config")
 def main(args):
@@ -57,6 +58,7 @@ def main(args):
             "lr": args.lrBackbone,},
     ]
 
+    early_stopping = EarlyStopping(patience=2)
     optimizer = AdamW(paramDicts, args.lr, weight_decay=args.weightDecay)
     lrScheduler = StepLR(optimizer, args.lrDrop)
     prevBestLoss = np.inf
@@ -154,6 +156,12 @@ def main(args):
             torch.save(model.state_dict(), f'{wandb.run.dir}/best.pt')
             wandb.save(f'{wandb.run.dir}/best.pt')
             prevBestLoss = avgLoss
+
+        # MARK: - early stopping
+        if early_stopping(avgLoss):
+            print('[+] Early stopping at epoch {}'.format(epoch))
+            break
+
     wandb.finish()
 
         
