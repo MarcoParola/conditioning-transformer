@@ -36,6 +36,7 @@ weightDecay: 1e-4
 epochs: 30
 lrDrop: 1000
 clipMaxNorm: .1
+patience: 10
 
 # MARK: - loss
 classCost: 1.

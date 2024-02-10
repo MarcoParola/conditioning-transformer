@@ -58,7 +58,7 @@ def main(args):
             "lr": args.lrBackbone,},
     ]
 
-    early_stopping = EarlyStopping(patience=2)
+    early_stopping = EarlyStopping(patience=args.patience)
     optimizer = AdamW(paramDicts, args.lr, weight_decay=args.weightDecay)
     lrScheduler = StepLR(optimizer, args.lrDrop)
     prevBestLoss = np.inf
