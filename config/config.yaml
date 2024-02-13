@@ -1,3 +1,7 @@
+defaults:
+  - _self_
+  - metadataScaling
+  
 seed: 42
 numGroups: 8
 growthRate: 32
@@ -18,7 +22,7 @@ numBlocks:
   - 6
   - 6
 
-# MARK: - dataset
+# MARK: - yolo dataset
 targetHeight: 608
 targetWidth: 608
 
@@ -60,35 +64,3 @@ amp: False
 # MARK: - wandb
 wandbEntity: marcoparola
 wandbProject: conditioning-transformer
-
-scaleMetadata:
-  Wind Speed:
-    - 0
-    - 20
-  Wind Direction:
-    - 0
-    - 360
-  Temperature:
-    - -20
-    - 40
-  Humidity:
-    - 0
-    - 100
-  Precipitation latest 10 min:
-    - 0
-    - 5
-  Dew Point:
-    - -15
-    - 20
-  Sun Radiation Intensity:
-    - 0
-    - 1100
-  Min of sunshine latest 10 min:
-    - 0
-    - 10
-  Hour:
-    - 0
-    - 23
-  Month:
-    - 1
-    - 12
