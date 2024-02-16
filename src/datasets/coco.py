@@ -57,10 +57,6 @@ class COCODataset(Dataset):
         for annotation in self.coco.imgToAnns[imgID]:
             cat = self.newIndex[annotation['category_id']]
             bbox = annotation['bbox']
-
-            # convert from [x1, y1, x2, y2] to [x, y, w, h]
-            bbox[2] -= bbox[0]
-            bbox[3] -= bbox[1]
             bbox = [val / imgHeight if i % 2 else val / imgWidth for i, val in enumerate(bbox)]
             ans.append(bbox + [cat])
 
@@ -106,23 +102,24 @@ def main(args):
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collateFunction)
     print(dataset.__len__())
     
-    for images, metadata, targets in dataloader:
-        print(type(images), type(metadata), type(targets))
-        print(images.shape, metadata.shape, targets[0]['boxes'].shape, targets[0]['labels'].shape)
+    #for images, metadata, targets in dataloader:
+    #    print(type(images), type(metadata), type(targets))
+    #    print(images.shape, metadata.shape, targets[0]['boxes'].shape, targets[0]['labels'].shape)
         
-        for i in range(len(images)):
-            image, meta, target = images[i], metadata[i], targets[i]
-            fig, ax = plt.subplots()
-            ax.imshow(image.permute(1, 2, 0))
+    for j in range(dataset.__len__()):
+        image, meta, target = dataset.__getitem__(j)
+        fig, ax = plt.subplots()
+        ax.imshow(image.permute(1, 2, 0))
 
-            for i in range(len(target['boxes'])):
-                img_w, img_h = image.size(2), image.size(1)
-                x, y, w, h = target['boxes'][i]
-                x, y = x*img_w, y*img_h 
-                w, h = w*img_w, h*img_h
-                rect = patches.Rectangle((x,y), w,h, linewidth=1, edgecolor='r', facecolor='none')
-                ax.add_patch(rect)
-            plt.show()
+        for i in range(len(target['boxes'])):
+            img_w, img_h = image.size(2), image.size(1)
+            x, y, w, h = target['boxes'][i]
+            x, y = x*img_w, y*img_h 
+            w, h = w*img_w, h*img_h
+            rect = patches.Rectangle((x,y), w,h, linewidth=1, edgecolor='r', facecolor='none')
+            ax.add_patch(rect)
+        plt.show()
+        #plt.close(fig)
     
 if __name__ == '__main__':
     main()

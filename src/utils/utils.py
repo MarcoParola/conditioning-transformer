@@ -12,7 +12,7 @@ def load_weights(model, weight_path, device):
         
 def load_model(args):
     if args.model == 'early-sum-detr':
-        from src.models.earlySummationDetr import EarlySummationDETR
+        from src.models.earlySumDetr import EarlySummationDETR
         model = EarlySummationDETR(args)
     elif args.model == 'early-concat-detr':
         from src.models.earlyConcatDetr import EarlyConcatenationDETR
@@ -20,6 +20,8 @@ def load_model(args):
     elif args.model == 'detr':
         from src.models.detr import DETR
         model = DETR(args)
+    else:
+        raise ValueError(f'unknown model: {args.model}')
 
     if args.weight != '':
         device = torch.device(args.device)

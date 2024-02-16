@@ -35,17 +35,9 @@ class Transformer(nn.Module):
 
         :return: tensor of shape [batchSize, numQuery * numDecoderLayer, hiddenDims]
         """
-        N = src.shape[0]
-
-        src = src.flatten(2).permute(2, 0, 1)
-        mask = mask.flatten(1)
-        pos = pos.flatten(2).permute(2, 0, 1)
-        query = query.unsqueeze(1).repeat(1, N, 1)
         tgt = torch.zeros_like(query)
-
         memory = self.encoder(src, srcKeyPaddingMask=mask, pos=pos)
         out = self.decoder(tgt, memory, memoryKeyPaddingMask=mask, pos=pos, queryPos=query).transpose(1, 2)
-
         return out
 
 
