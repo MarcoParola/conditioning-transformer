@@ -8,6 +8,7 @@ growthRate: 32
 currentDir: ${hydra:runtime.cwd}
 
 # MARK: - transformer
+model: null
 hiddenDims: 512
 numHead: 8
 numEncoderLayer: 6
@@ -29,7 +30,6 @@ targetWidth: 608
 # MARK: - miscellaneous
 device: cuda
 weight: ""
-#weight: ${hydra:runtime.cwd}/checkpoint/mango.pt
 
 
 # MARK: - training config
@@ -37,10 +37,10 @@ lr: 1e-6
 lrBackbone: 1e-5
 batchSize: 8
 weightDecay: 1e-4
-epochs: 30
+epochs: 50
 lrDrop: 1000
 clipMaxNorm: .1
-patience: 10
+patience: 20
 
 # MARK: - loss
 classCost: 1.
@@ -50,9 +50,9 @@ eosCost: .1
 
 # MARK: - dataset
 dataDir: ${hydra:runtime.cwd}/data
-trainAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
-valAnnFile: ${hydra:runtime.cwd}/data/small/Valid.json
-testAnnFile: ${hydra:runtime.cwd}/data/Test.json
+trainAnnFile: ${hydra:runtime.cwd}/data/medium/Train.json
+valAnnFile: ${hydra:runtime.cwd}/data/medium/Valid.json
+testAnnFile: ${hydra:runtime.cwd}/data/medium/Test.json
 
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint

@@ -42,14 +42,15 @@ wandb login
 
 
 
-To perform a training run:
+To perform a training run by setting `model` parameter:
 ```sh
-python train.py
+python train.py model=detr
 ```
+`model` can assume the following value `detr`, `early-sum-detr`, `early-concat-detr`
 
 To run inference on test set to compute some metrics, specify the weight model path by setting `weight` parameter (I ususally download it from wandb and I copy it in `checkpoint` folder).
 ```sh
-python evaluate.py weight=checkpoint/best.pt
+python test.py model=detr weight=checkpoint/best.pt
 ```
 
 ## Acknowledgement
