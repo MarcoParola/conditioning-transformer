@@ -48,8 +48,9 @@ def main(args):
 
         for batch, (imgs, metadata, targets) in enumerate(tqdm(test_dataloader)):
             imgs = imgs.to(device)
+            metadata = metadata.to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-            out = model(imgs)
+            out = model(imgs, metadata)
             metrics = criterion(out, targets)
             testMetrics.append(metrics)
 
