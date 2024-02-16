@@ -9,8 +9,9 @@ import wandb
 import hydra
 from tqdm import tqdm
 
-from src.models import DETR, SetCriterion
+from src.models import SetCriterion
 from src.datasets import collateFunction, COCODataset
+from src.utils import load_model
 from src.utils.misc import baseParser, cast2Float
 from src.utils.utils import load_weights
 
@@ -30,15 +31,11 @@ def main(args):
         batch_size=args.batchSize, 
         shuffle=False, 
         collate_fn=collateFunction,
-        #pin_memory=True, 
         num_workers=args.numWorkers)
     
     # load model
     criterion = SetCriterion(args).to(device)
-    model = DETR(args).to(device)
-    if args.weight != '':
-        model_path = os.path.join(args.currentDir, args.weight)
-        model = load_weights(model, model_path, device)
+    model = load_model(args).to(device)  
     
     # multi-GPU training
     if args.multi:

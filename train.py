@@ -9,9 +9,9 @@ import wandb
 import hydra
 from tqdm import tqdm
 
-from src.models import DETR, SetCriterion
+from src.models import SetCriterion
 from src.datasets import collateFunction, COCODataset
-from src.utils.utils import load_weights
+from src.utils import load_model
 from src.utils import baseParser, cast2Float
 from src.utils import EarlyStopping
 
@@ -42,14 +42,7 @@ def main(args):
     
     # set model and criterion, load weights if available
     criterion = SetCriterion(args).to(device)
-    model = DETR(args).to(device)
-    if args.weight != '':
-        model_path = os.path.join(args.currentDir, args.weight)
-        model = load_weights(model, model_path, device)
-
-    # multi-GPU training
-    if args.multi:
-        model = torch.nn.DataParallel(model)
+    model = load_model(args).to(device)    
 
     # separate learning rate
     paramDicts = [
@@ -75,14 +68,15 @@ def main(args):
         # MARK: - training
         for batch, (imgs, metadata, targets) in enumerate(tqdm(train_dataloader)):
             imgs = imgs.to(device)
+            metadata = metadata.to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
             if args.amp:
                 with amp.autocast():
-                    out = model(imgs)
+                    out = model(imgs, metadata)
                 out = cast2Float(out) # cast output to float to overcome amp training issue
             else:
-                out = model(imgs)
+                out = model(imgs, metadata)
 
             metrics = criterion(out, targets)
             
@@ -133,8 +127,9 @@ def main(args):
                 losses = []
                 for imgs, metadata, targets in tqdm(val_dataloader):
                     imgs = imgs.to(device)
+                    metadata = metadata.to(device)
                     targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-                    out = model(imgs)
+                    out = model(imgs, metadata)
 
                     metrics = criterion(out, targets)
                     valMetrics.append(metrics)
