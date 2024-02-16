@@ -7,20 +7,7 @@ from torch.quantization import quantize_dynamic
 from src.utils.misc import PostProcess
 from .backbone import buildBackbone
 from .transformer import Transformer
-
-
-class MLP(nn.Module):
-    def __init__(self, inputDim: int, hiddenDim: int, outputDim: int, numLayers: int):
-        super().__init__()
-        self.numLayers = numLayers
-
-        h = [hiddenDim] * (numLayers - 1)
-        self.layers = nn.ModuleList(nn.Linear(n, k) for n, k in zip([inputDim] + h, h + [outputDim]))
-
-    def forward(self, x: Tensor) -> Tensor:
-        for i, layer in enumerate(self.layers):
-            x = nn.functional.relu(layer(x)) if i < self.numLayers - 1 else layer(x)
-        return x
+from .mlp import MLP
 
 
 class DETR(nn.Module):
@@ -38,7 +25,7 @@ class DETR(nn.Module):
         self.classEmbed = nn.Linear(args.hiddenDims, args.numClass + 1)
         self.bboxEmbed = MLP(args.hiddenDims, args.hiddenDims, 4, 3)
 
-    def forward(self, x: Tensor) -> Dict[str, Union[Tensor, List[Dict[str, Tensor]]]]:
+    def forward(self, x: Tensor, meta=None) -> Dict[str, Union[Tensor, List[Dict[str, Tensor]]]]:
         """
         :param x: tensor of shape [batchSize, 3, imageHeight, imageWidth].
 
@@ -57,7 +44,14 @@ class DETR(nn.Module):
         features, (pos, mask) = self.backbone(x)
         features = self.reshape(features)
 
-        out = self.transformer(features, mask, self.queryEmbed.weight, pos)
+        N = features.shape[0]
+        features = features.flatten(2).permute(2, 0, 1)
+        mask = mask.flatten(1)
+        pos = pos.flatten(2).permute(2, 0, 1)
+        query = self.queryEmbed.weight
+        query = query.unsqueeze(1).repeat(1, N, 1)
+
+        out = self.transformer(features, mask, query, pos)
 
         outputsClass = self.classEmbed(out)
         outputsCoord = self.bboxEmbed(out).sigmoid()
