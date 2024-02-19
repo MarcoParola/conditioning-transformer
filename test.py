@@ -57,6 +57,8 @@ def main(args):
         testMetrics = {k: torch.stack([m[k] for m in testMetrics]).mean() for k in testMetrics[0]}
         for k,v in testMetrics.items():
             wandb.log({f"test/{k}": v.item()}, step=0)
+    
+    wandb.finish()
 
    
 if __name__ == '__main__':
