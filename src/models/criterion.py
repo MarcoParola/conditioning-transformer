@@ -77,17 +77,25 @@ class SetCriterion(nn.Module):
             predClass = nn.functional.softmax(logits[idx], -1).max(-1)[1]
             classMask = (predClass == targetClassO)[mask]
             iou = torch.diag(boxIoU(boxCxcywh2Xyxy(boxes), boxCxcywh2Xyxy(targetBoxes))[0])
-
+            iou_th = [50, 75, 95]
+            map_th = []
             ap = []
             for threshold in range(50, 100, 5):
-                ap.append(((iou >= threshold / 100) * classMask).sum() / numBoxes)
+                ap_th = ((iou >= threshold / 100) * classMask).sum() / numBoxes
+                ap.append(ap_th)
+                if threshold in iou_th:
+                    map_th.append(ap_th)
 
             ap = torch.mean(torch.stack(ap))
 
         return {'classification loss': classificationLoss,
                 'bbox loss': bboxLoss,
                 'gIoU loss': giouLoss,
-                'mAP': ap}
+                'mAP': ap,
+                'mAP_50': map_th[0],
+                'mAP_75': map_th[1],
+                'mAP_95': map_th[2]
+                }
 
     @staticmethod
     def getPermutationIdx(indices: List[Tuple[Tensor, Tensor]]) -> Tuple[Tensor, Tensor]:

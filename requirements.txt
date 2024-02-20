@@ -35,12 +35,16 @@ nvidia-nccl-cu12==2.19.3
 nvidia-nvjitlink-cu12==12.3.101
 nvidia-nvtx-cu12==12.1.105
 omegaconf==2.3.0
+opencv-python==4.9.0.80
 packaging==23.2
 pillow==10.2.0
 protobuf==4.25.2
 psutil==5.9.8
 pycocotools==2.0.7
 pyparsing==3.1.1
+PyQt5==5.15.10
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.13.0
 python-dateutil==2.8.2
 PyYAML==6.0.1
 requests==2.31.0
