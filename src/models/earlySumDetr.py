@@ -18,7 +18,7 @@ class EarlySummationDETR(nn.Module):
 
         self.reshape = nn.Conv2d(self.backbone.backbone.outChannels, args.hiddenDims, 1)
 
-        self.metaProjection = nn.Linear(10, args.hiddenDims * 12 * 9) # TODO parameterize
+        self.metaProjection = nn.Linear(args.numMetadata, args.hiddenDims * 12 * 9) # TODO parameterize
         self.projection_size = (args.hiddenDims, 9, 12)
 
         self.transformer = Transformer(args.hiddenDims, args.numHead, args.numEncoderLayer, args.numDecoderLayer,

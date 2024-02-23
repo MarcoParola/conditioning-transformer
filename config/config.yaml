@@ -9,6 +9,7 @@ currentDir: ${hydra:runtime.cwd}
 
 # MARK: - transformer
 model: null
+dummy: False
 hiddenDims: 512
 numHead: 8
 numEncoderLayer: 6
@@ -64,3 +65,8 @@ amp: False
 # MARK: - wandb
 wandbEntity: marcoparola
 wandbProject: conditioning-transformer
+
+inference:
+  savePlot: False
+  showPlot: True
+  savePrediction: False

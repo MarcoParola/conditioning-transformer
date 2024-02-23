@@ -34,15 +34,22 @@ def main(args):
     if args.multi:
         model = torch.nn.DataParallel(model)
 
+    # create a folder using args.model param in the outputDir
+    fileDir = os.path.join(args.outputDir, args.model)
+    print('fileDir', fileDir)
+    os.makedirs(fileDir, exist_ok=True)
+    
     model.eval()
     with torch.no_grad():
         for i in range(test_dataset.__len__()):
+
+            
 
             img, metadata, target = test_dataset.__getitem__(i)           
             
             imgID = test_dataset.ids[i]
             imgInfo = test_dataset.coco.imgs[imgID]  
-            print('\nfile', imgInfo['file_name'])
+            print('\nfile', imgInfo['id'])
 
             img = img.unsqueeze(0).to(device)
             metadata = metadata.unsqueeze(0).to(device)
@@ -64,35 +71,58 @@ def main(args):
             boxes = out['bbox'][idx][mask]
             targetBoxes = torch.cat([t['boxes'][i] for t, (_, i) in zip(target, ids)], 0)[mask]
 
-            # plot the image
-            import matplotlib.pyplot as plt
-            import matplotlib.patches as patches
-            fig, ax = plt.subplots()
-            ax.imshow(img.squeeze(0).cpu().permute(1, 2, 0))
+            if args.inference.showPlot or args.inference.savePlot:
+                
+                import matplotlib.pyplot as plt
+                import matplotlib.patches as patches
+                fig, ax = plt.subplots()
+                ax.imshow(img.squeeze(0).cpu().permute(1, 2, 0))
 
-            for j in range(len(target[0]['boxes'])):
-                x, y, w, h = target[0]['boxes'][j].tolist()
-                x, y, w, h = x*img.size(3), y*img.size(2), w*img.size(3), h*img.size(2)
-                lbl = target[0]['labels'][j].item()
-                print(lbl, [x, y, w, h])
-                rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='none')
-                ax.add_patch(rect)
+                # plot the ground truth
+                for j in range(len(target[0]['boxes'])):
+                    x, y, w, h = target[0]['boxes'][j].tolist()
+                    x, y, w, h = x*img.size(3), y*img.size(2), w*img.size(3), h*img.size(2)
+                    lbl = target[0]['labels'][j].item()
+                    print(x, y, w, h, lbl)
+                    rect1 = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='none')
+                    ax.add_patch(rect1)
+            
             
 
-            # MARK: - compute statistics
+            # plot the prediction
             with torch.no_grad():
                 predClass = torch.nn.functional.softmax(logits[idx], -1).max(-1)[1]
                 classMask = (predClass == targetClassO)[mask]
                 ious = torch.diag(boxIoU(boxCxcywh2Xyxy(boxes), boxCxcywh2Xyxy(targetBoxes))[0])
                 for  lbl, bbox in zip(predClass.tolist(), boxes.tolist()):
-                    print(lbl, bbox)
-                    x, y, w, h = bbox
-                    x, y, w, h = x*img.size(3), y*img.size(2), w*img.size(3), h*img.size(2)
-                    rect = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='g', facecolor='none')
-                    ax.add_patch(rect)
-            plt.show()
-            
+                    #print(lbl, bbox)
 
+                    # for each bbox and lbl create a txt file with the following format:
+                    # lbl x y w h
+                    # named as <imgInfo['file_name']> .txt
+                    # save it in the folder created using args.model param in the outputDir
+                    # please note imgInfo['file_name'] contains some '/' characters
+                    # replace them with '_' to avoid creating subfolders
+                    if args.inference.savePrediction:
+                        with open(os.path.join(args.outputDir, args.model, str(imgInfo['id']) + '.txt'), 'a') as f:
+                            f.write(f"{lbl} {' '.join([str(x) for x in bbox])}\n")
+                    
+                    if args.inference.showPlot or args.inference.savePlot:
+                        x, y, w, h = bbox
+                        x, y, w, h = x*img.size(3), y*img.size(2), w*img.size(3), h*img.size(2)
+                        rect2 = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='g', facecolor='none')
+                        ax.add_patch(rect2)
+
+            if args.inference.showPlot or args.inference.savePlot:
+                ax.legend([rect1, rect2], ['Ground truth', 'Prediction'])
+                ax.set_xticks([])
+                ax.set_yticks([])
+            if args.inference.showPlot:
+                plt.show()    
+            if args.inference.savePlot:
+                plt.savefig(os.path.join(args.outputDir, args.model, str(imgInfo['id']) + '.png'))
+                plt.close() 
+            
 
 
    
