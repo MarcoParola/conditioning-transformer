@@ -9,7 +9,7 @@ currentDir: ${hydra:runtime.cwd}
 
 # MARK: - transformer
 model: null
-dummy: False
+dummy: True
 hiddenDims: 512
 numHead: 8
 numEncoderLayer: 6
@@ -36,7 +36,7 @@ weight: ""
 # MARK: - training config
 lr: 1e-6
 lrBackbone: 1e-5
-batchSize: 8
+batchSize: 16
 weightDecay: 1e-4
 epochs: 50
 lrDrop: 1000
@@ -68,5 +68,5 @@ wandbProject: conditioning-transformer
 
 inference:
   savePlot: False
-  showPlot: True
+  showPlot: False
   savePrediction: False

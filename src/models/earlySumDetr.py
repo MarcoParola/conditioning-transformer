@@ -24,6 +24,8 @@ class EarlySummationDETR(nn.Module):
         self.transformer = Transformer(args.hiddenDims, args.numHead, args.numEncoderLayer, args.numDecoderLayer,
                                        args.dimFeedForward, args.dropout)
 
+        self.dummy = args.dummy
+
         self.queryEmbed = nn.Embedding(args.numQuery, args.hiddenDims)
         self.classEmbed = nn.Linear(args.hiddenDims, args.numClass + 1)
         self.bboxEmbed = MLP(args.hiddenDims, args.hiddenDims, 4, 3)
@@ -48,6 +50,9 @@ class EarlySummationDETR(nn.Module):
         """
         features, (pos, mask) = self.backbone(x)
         features = self.reshape(features)
+        if self.dummy:
+            # set each element of the meta to 0
+            meta = torch.ones_like(meta)
         meta = self.metaProjection(meta)
         meta = meta.view(-1, *self.projection_size)
 

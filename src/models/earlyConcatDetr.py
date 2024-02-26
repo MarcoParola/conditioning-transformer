@@ -51,7 +51,7 @@ class EarlyConcatenationDETR(nn.Module):
         features = self.reshape(features)
         if self.dummy:
             # set each element of the meta to 0
-            meta = torch.zeros_like(meta)
+            meta = torch.ones_like(meta)
         meta = self.metaProjection(meta)
 
         # change mate shape, from [batchSize, n_channels] to [1, batchSize, n_channels]

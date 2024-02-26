@@ -102,9 +102,9 @@ def main(args):
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=collateFunction)
     print(dataset.__len__())
     
-    #for images, metadata, targets in dataloader:
-    #    print(type(images), type(metadata), type(targets))
-    #    print(images.shape, metadata.shape, targets[0]['boxes'].shape, targets[0]['labels'].shape)
+    for images, metadata, targets in dataloader:
+        print(type(images), type(metadata), type(targets))
+        print(images.shape, metadata.shape, targets[0]['boxes'].shape, targets[0]['labels'].shape)
         
     for j in range(dataset.__len__()):
         image, meta, target = dataset.__getitem__(j)
