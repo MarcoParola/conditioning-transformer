@@ -12,7 +12,7 @@ from tqdm import tqdm
 from src.models import SetCriterion
 from src.datasets import collateFunction, COCODataset
 from src.utils import load_model
-from src.utils.misc import baseParser, cast2Float
+from src.utils.misc import cast2Float
 from src.utils.utils import load_weights
 
 

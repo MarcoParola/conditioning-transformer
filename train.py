@@ -12,7 +12,7 @@ from tqdm import tqdm
 from src.models import SetCriterion
 from src.datasets import collateFunction, COCODataset
 from src.utils import load_model
-from src.utils import baseParser, cast2Float
+from src.utils import cast2Float
 from src.utils import EarlyStopping
 
 @hydra.main(config_path="config", config_name="config")
