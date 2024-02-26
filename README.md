@@ -46,7 +46,7 @@ To perform a training run by setting `model` parameter:
 ```sh
 python train.py model=detr
 ```
-`model` can assume the following value `detr`, `early-sum-detr`, `early-concat-detr`
+`model` can assume the following value `detr`, `early-sum-detr`, `early-concat-detr`, `early-shift-detr`.
 
 To run inference on test set to compute some metrics, specify the weight model path by setting `weight` parameter (I ususally download it from wandb and I copy it in `checkpoint` folder).
 ```sh

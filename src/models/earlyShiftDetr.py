@@ -10,15 +10,15 @@ from .transformer import Transformer
 from .mlp import MLP
 
 
-class EarlySummationDETR(nn.Module):
+class EarlyShiftDETR(nn.Module):
     def __init__(self, args):
-        super(EarlySummationDETR, self).__init__()
+        super(EarlyShiftDETR, self).__init__()
 
         self.backbone = buildBackbone(args)
 
         self.reshape = nn.Conv2d(self.backbone.backbone.outChannels, args.hiddenDims, 1)
 
-        self.metaProjection = nn.Linear(args.numMetadata, args.hiddenDims * 12 * 9) # TODO parameterize
+        self.metaProjection = nn.Linear(args.numMetadata, 1) 
         self.projection_size = (args.hiddenDims, 9, 12)
 
         self.transformer = Transformer(args.hiddenDims, args.numHead, args.numEncoderLayer, args.numDecoderLayer,
@@ -54,8 +54,12 @@ class EarlySummationDETR(nn.Module):
             # set each element of the meta to 0
             meta = torch.ones_like(meta)
         meta = self.metaProjection(meta)
-        meta = meta.view(-1, *self.projection_size)
+        # repeat meta (that has shape [batchSize, 1]) to match the shape of features 
+        # defined in self.projection_size
+        meta = meta.repeat(1, *self.projection_size)
         print('meta shape:', meta.shape)
+
+        #meta = meta.view(-1, *self.projection_size)
 
         # implementing the early summation strategy
         features = features + meta
@@ -77,11 +81,11 @@ class EarlySummationDETR(nn.Module):
                 'aux': [{'class': oc, 'bbox': ob} for oc, ob in zip(outputsClass[:-1], outputsCoord[:-1])]}
 
 
-class EarlySummationDETRWrapper(nn.Module):
-    """ A simple EarlySummationDETR wrapper that allows torch.jit to trace the module since dictionary output is not supported yet """
+class EarlyShiftDETRWrapper(nn.Module):
+    """ A simple EarlyShiftDETR wrapper that allows torch.jit to trace the module since dictionary output is not supported yet """
 
     def __init__(self, early_sum_detr, postProcess):
-        super(EarlySummationDETRWrapper, self).__init__()
+        super(EarlyShiftDETRWrapper, self).__init__()
 
         self.early_sum_detr = early_sum_detr
         self.postProcess = postProcess
@@ -106,12 +110,12 @@ def buildInferenceModel(args, quantize=False):
     assert os.path.exists(args.weight), 'inference model should have pre-trained weight'
     device = torch.device(args.device)
 
-    model = EarlySummationDETR(args).to(device)
+    model = EarlyShiftDETR(args).to(device)
     model.load_state_dict(torch.load(args.weight, map_location=device))
 
     postProcess = PostProcess().to(device)
 
-    wrapper = EarlySummationDETRWrapper(model, postProcess).to(device)
+    wrapper = EarlyShiftDETRWrapper(model, postProcess).to(device)
     wrapper.eval()
 
     if quantize:

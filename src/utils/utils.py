@@ -17,6 +17,9 @@ def load_model(args):
     elif args.model == 'early-concat-detr':
         from src.models.earlyConcatDetr import EarlyConcatenationDETR
         model = EarlyConcatenationDETR(args)
+    elif args.model == 'early-shift-detr':
+        from src.models.earlyShiftDetr import EarlyShiftDETR
+        model = EarlyShiftDETR(args)
     elif args.model == 'detr':
         from src.models.detr import DETR
         model = DETR(args)
