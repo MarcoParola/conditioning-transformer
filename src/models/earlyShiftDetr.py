@@ -54,22 +54,23 @@ class EarlyShiftDETR(nn.Module):
             # set each element of the meta to 0
             meta = torch.ones_like(meta)
         meta = self.metaProjection(meta)
-        # repeat meta (that has shape [batchSize, 1]) to match the shape of features 
-        # defined in self.projection_size
-        meta = meta.repeat(1, *self.projection_size)
-        print('meta shape:', meta.shape)
 
-        #meta = meta.view(-1, *self.projection_size)
+        batch = features.shape[0]
+        hidDim = features.shape[1]
+        target_size = self.projection_size
+        new_target_size = (batch,) + target_size
+        tmp = torch.ones(new_target_size).to(meta.device)
+        meta_expanded = meta.view(batch, 1, 1, 1).expand(batch, hidDim, 1, 1)
+        meta = meta_expanded * tmp
 
-        # implementing the early summation strategy
+        # implementing the early shift strategy
         features = features + meta
         
-        N = features.shape[0]
         features = features.flatten(2).permute(2, 0, 1)
         mask = mask.flatten(1)
         pos = pos.flatten(2).permute(2, 0, 1)
         query = self.queryEmbed.weight
-        query = query.unsqueeze(1).repeat(1, N, 1)
+        query = query.unsqueeze(1).repeat(1, batch, 1)
 
         out = self.transformer(features, mask, query, pos)
 
