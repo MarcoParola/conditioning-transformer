@@ -25,8 +25,8 @@ def main(args):
     os.makedirs(args.outputDir, exist_ok=True)
 
     # load data
-    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.scaleMetadata)
-    val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, args.scaleMetadata)
+    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.sequenceLength, args.scaleMetadata)
+    val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, args.sequenceLength, args.scaleMetadata)
     
     train_dataloader = DataLoader(train_dataset, 
         batch_size=args.batchSize, 

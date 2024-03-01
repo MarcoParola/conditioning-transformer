@@ -12,16 +12,22 @@ def load_weights(model, weight_path, device):
         
 def load_model(args):
     if args.model == 'early-sum-detr':
-        from src.models.earlySumDetr import EarlySummationDETR
+        from src.models.detr.earlySumDetr import EarlySummationDETR
         model = EarlySummationDETR(args)
     elif args.model == 'early-concat-detr':
-        from src.models.earlyConcatDetr import EarlyConcatenationDETR
+        from src.models.detr.earlyConcatDetr import EarlyConcatenationDETR
         model = EarlyConcatenationDETR(args)
+    elif args.model == 'early-mul-detr':
+        from src.models.detr.earlyMulDetr import EarlyMultiplicationDETR
+        model = EarlyMultiplicationDETR(args)
+    elif args.model == 'early-affine-detr':
+        from src.models.detr.earlyAffinelDetr import EarlyAffineDETR
+        model = EarlyAffineDETR(args)
     elif args.model == 'early-shift-detr':
-        from src.models.earlyShiftDetr import EarlyShiftDETR
+        from src.models.detr.earlyShiftDetr import EarlyShiftDETR
         model = EarlyShiftDETR(args)
     elif args.model == 'detr':
-        from src.models.detr import DETR
+        from src.models.detr.detr import DETR
         model = DETR(args)
     else:
         raise ValueError(f'unknown model: {args.model}')

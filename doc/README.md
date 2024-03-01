@@ -10,11 +10,11 @@ The project is composed of the following modules, more details are below:
 
 ## Main scripts for training and test models
 
-All the experiments consist of train and evaluate transformer architectures. You can use `train.py` and `evaluate.py`, respectively. 
+All the experiments consist of train and test transformer architectures. You can use `train.py` and `test.py`, respectively. 
 
 ```bash
 python train.py
-python evaluate.py weight=path/to/model-weight
+python test.py weight=path/to/model-weight
 ```
 
 
