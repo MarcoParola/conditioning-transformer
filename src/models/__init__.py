@@ -1,4 +1,4 @@
 from .criterion import SetCriterion
-from .detr import DETR, buildInferenceModel
-from .earlySumDetr import EarlySummationDETR, buildInferenceModel
-from .earlyConcatDetr import EarlyConcatenationDETR, buildInferenceModel
+from .detr.detr import DETR, buildInferenceModel
+from .detr.earlySumDetr import EarlySummationDETR, buildInferenceModel
+from .detr.earlyConcatDetr import EarlyConcatenationDETR, buildInferenceModel
