@@ -9,7 +9,7 @@ currentDir: ${hydra:runtime.cwd}
 
 # MARK: - transformer
 model: null
-dummy: True
+dummy: False
 hiddenDims: 512
 numHead: 8
 numEncoderLayer: 6
@@ -34,11 +34,11 @@ weight: ""
 
 
 # MARK: - training config
-lr: 1e-6
+lr: 3e-6
 lrBackbone: 1e-5
 batchSize: 16
 weightDecay: 1e-4
-epochs: 50
+epochs: 80
 lrDrop: 1000
 clipMaxNorm: .1
 patience: 15
@@ -53,12 +53,12 @@ eosCost: .1
 dataDir: ${hydra:runtime.cwd}/data
 trainAnnFile: ${hydra:runtime.cwd}/data/medium/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/medium/Valid.json
-testAnnFile: ${hydra:runtime.cwd}/data/medium/Test.json
+testAnnFile: ${hydra:runtime.cwd}/data/orig/Test.json
 
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint
 taskName: DETR
-numWorkers: 1
+numWorkers: 2
 multi: False
 amp: False
 
