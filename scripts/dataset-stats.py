@@ -8,8 +8,10 @@ def compute_stats(json_data):
             category_count[annotation["category_id"]] = 0
         category_count[annotation["category_id"]] += 1
 
+    print(json_data["categories"])
     for category in json_data["categories"]:
-        print("-%s: %d" % (category["name"], category_count[category["id"]]))
+        num_occurrences = category_count[category["id"]] if category["id"] in category_count else 0
+        print("-%s: %d" % (category["name"], num_occurrences))
 
 
 if __name__ == '__main__':
