@@ -18,8 +18,8 @@ class EarlyAffineDETR(nn.Module):
 
         self.reshape = nn.Conv2d(self.backbone.backbone.outChannels, args.hiddenDims, 1)
 
-        self.metaProjectionSum = nn.Linear(args.numMetadata, args.hiddenDims * 12 * 9) # TODO parameterize
-        self.metaProjectionMul = nn.Linear(args.numMetadata, args.hiddenDims * 12 * 9) # TODO parameterize
+        self.metaProjectionSum = nn.Linear(args.numMetadata * args.sequenceLength, args.hiddenDims * 12 * 9) # TODO parameterize
+        self.metaProjectionMul = nn.Linear(args.numMetadata * args.sequenceLength, args.hiddenDims * 12 * 9) # TODO parameterize
         self.projection_size = (args.hiddenDims, 9, 12)
 
         self.transformer = Transformer(args.hiddenDims, args.numHead, args.numEncoderLayer, args.numDecoderLayer,
@@ -51,6 +51,7 @@ class EarlyAffineDETR(nn.Module):
         """
         features, (pos, mask) = self.backbone(x)
         features = self.reshape(features)
+        meta = meta.flatten(1).float()
         if self.dummy:
             # set each element of the meta to 0
             meta = torch.ones_like(meta)

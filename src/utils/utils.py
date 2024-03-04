@@ -21,7 +21,7 @@ def load_model(args):
         from src.models.detr.earlyMulDetr import EarlyMultiplicationDETR
         model = EarlyMultiplicationDETR(args)
     elif args.model == 'early-affine-detr':
-        from src.models.detr.earlyAffinelDetr import EarlyAffineDETR
+        from src.models.detr.earlyAffineDetr import EarlyAffineDETR
         model = EarlyAffineDETR(args)
     elif args.model == 'early-shift-detr':
         from src.models.detr.earlyShiftDetr import EarlyShiftDETR
