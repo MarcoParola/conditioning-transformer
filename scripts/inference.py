@@ -27,7 +27,7 @@ def main(args):
     matcher = HungarianMatcher(args.classCost, args.bboxCost, args.giouCost)
 
     # load data and model
-    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, args.scaleMetadata)
+    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, args.sequenceLength, args.scaleMetadata)
     model = load_model(args).to(device)  
     
     # multi-GPU training
@@ -57,6 +57,7 @@ def main(args):
 
 
             out = model(img, metadata)
+            print(out)
             logits = out['class']
  
             ids = matcher(out, target)
@@ -83,7 +84,7 @@ def main(args):
                     x, y, w, h = target[0]['boxes'][j].tolist()
                     x, y, w, h = x*img.size(3), y*img.size(2), w*img.size(3), h*img.size(2)
                     lbl = target[0]['labels'][j].item()
-                    print(x, y, w, h, lbl)
+                    #print(x, y, w, h, lbl)
                     rect1 = patches.Rectangle((x, y), w, h, linewidth=1, edgecolor='r', facecolor='none')
                     ax.add_patch(rect1)
             
