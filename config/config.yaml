@@ -1,6 +1,7 @@
 defaults:
   - _self_
   - metadataScaling
+  - yolos
   
 seed: 42
 numGroups: 8
@@ -34,7 +35,7 @@ weight: ""
 
 
 # MARK: - training config
-lr: 3e-6
+lr: 1e-6
 lrBackbone: 1e-5
 batchSize: 16
 weightDecay: 1e-4
@@ -58,7 +59,7 @@ testAnnFile: ${hydra:runtime.cwd}/data/orig/Test.json
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint
 taskName: DETR
-numWorkers: 2
+numWorkers: 1
 multi: False
 amp: False
 

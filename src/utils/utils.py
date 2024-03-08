@@ -29,6 +29,9 @@ def load_model(args):
     elif args.model == 'detr':
         from src.models.detr.detr import DETR
         model = DETR(args)
+    elif args.model == 'yolos':
+        from src.models.yolos.yolos import Yolos
+        model = Yolos(args)
     else:
         raise ValueError(f'unknown model: {args.model}')
 

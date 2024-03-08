@@ -1,0 +1,9 @@
+yolos:
+  backboneName: "tiny"
+  pre_trained: null
+  detTokenNum: 100
+  init_pe_size: 
+    - 800
+    - 1344
+  mid_pe_size: null
+  use_checkpoint: False
