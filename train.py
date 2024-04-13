@@ -7,6 +7,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 import wandb
 import hydra
+import gc
 from tqdm import tqdm
 
 from src.models import SetCriterion
@@ -25,8 +26,8 @@ def main(args):
     os.makedirs(args.outputDir, exist_ok=True)
 
     # load data
-    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.sequenceLength, args.scaleMetadata)
-    val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, args.sequenceLength, args.scaleMetadata)
+    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.sequenceLength, dummy=args.dummy, scaling_thresholds=args.scaleMetadata)
+    val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, args.sequenceLength, dummy=args.dummy, scaling_thresholds=args.scaleMetadata)
     
     train_dataloader = DataLoader(train_dataset, 
         batch_size=args.batchSize, 
@@ -70,6 +71,10 @@ def main(args):
             imgs = imgs.to(device)
             metadata = metadata.to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+            # gc every 50 batches
+            if batch % 1000 == 0:
+                torch.cuda.empty_cache()
+                gc.collect()
 
             if args.amp:
                 with amp.autocast():

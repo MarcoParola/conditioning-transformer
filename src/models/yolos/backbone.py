@@ -374,7 +374,7 @@ class VisionTransformer(nn.Module):
         return output
 
 
-    def forward(self, x, return_attention=False):
+    def forward(self, x, meta=None, return_attention=False):
         if return_attention == True:
             # return self.forward_selfattention(x)
             return self.forward_return_all_selfattention(x)

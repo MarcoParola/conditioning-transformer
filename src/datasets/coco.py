@@ -18,6 +18,7 @@ class COCODataset(Dataset):
             annotation: str, 
             numClass: int = 4, 
             sequenceLength: int = 1, 
+            dummy: bool = False,
             scaling_thresholds: Dict[str, Tuple[float, float]] = None):
         self.root = root
         self.coco = COCO(annotation)
@@ -25,6 +26,7 @@ class COCODataset(Dataset):
         self.numClass = numClass
         self.sequenceLength = sequenceLength
         self.scaling_thresholds = scaling_thresholds
+        self.dummy = dummy
         self.transforms = T.Compose([
             T.ToTensor()
         ])
@@ -73,8 +75,8 @@ class COCODataset(Dataset):
 
     def loadMetadata(self, imgID: int) -> np.ndarray:
         imgInfo = self.coco.imgs[imgID]
-        #metadata = defaultdict(list)
 
+        
         # metadata must be declared as a dict of torch tensors
         metadata = {key: torch.tensor([]) for key in imgInfo['meta_hist'][0].keys()}
         metadata.pop('DateTime')
@@ -91,22 +93,33 @@ class COCODataset(Dataset):
                 else:
                     metadata[key] = torch.cat([metadata[key], torch.tensor([value])])
 
-        metadata = self.scale_harborfront_metadata(metadata)
+        if self.dummy:
+            metadata = self.get_dummy_metadata(metadata)
+        else:
+            metadata = self.scale_harborfront_metadata(metadata)
+
+        metadata = torch.as_tensor(np.array(list(metadata.values())))
         if metadata.size(1) < self.sequenceLength:
             metadata = torch.cat([metadata, metadata[:, -1].unsqueeze(1).repeat(1, self.sequenceLength - metadata.size(1))], dim=1)
         else:
             metadata = metadata[:, -self.sequenceLength:]
-        
+
         return metadata
 
+    def get_dummy_metadata(self, metadata):
+        meta = metadata.copy()
+        for key in meta.keys():
+            meta[key] = torch.randn_like(metadata[key]) * .9
+        return meta
+
     def scale_harborfront_metadata(self, metadata):
-        metadata = metadata.copy()
+        meta = metadata.copy()
         for key, (min_val, max_val) in self.scaling_thresholds.items():
-            metadata[key] = np.array(metadata[key])
-            metadata[key] = (metadata[key] - min_val) / (max_val - min_val)
-            metadata[key] = (metadata[key] - 0.5) * 4 # shift the range to [-2, 2]
-        metadata = torch.as_tensor(np.array(list(metadata.values())))
-        return metadata
+            meta[key] = np.array(metadata[key])
+            meta[key] = (metadata[key] - min_val) / (max_val - min_val)
+            meta[key] = (metadata[key] - 0.5) * 4 # shift the range to [-2, 2]
+        
+        return meta
 
 def collateFunction(batch: List[Tuple[Tensor, Tensor, dict]]) -> Tuple[Tensor, Tensor, Tuple[Dict[str, Tensor]]]:
     batch = tuple(zip(*batch))
@@ -126,11 +139,15 @@ def main(args):
     data_file = 'data/orig/Test.json'
     data_folder = os.path.join(args.currentDir, data_folder)
     data_file = os.path.join(args.currentDir, data_file)
-    dataset = COCODataset(data_folder, data_file, num_classes, args.sequenceLength, args.scaleMetadata)  
+    dataset = COCODataset(data_folder, data_file, num_classes, args.sequenceLength, dummy=False, scaling_thresholds=args.scaleMetadata)  
+    dummy_dataset = COCODataset(data_folder, data_file, num_classes, args.sequenceLength, dummy=True, scaling_thresholds=args.scaleMetadata)  
     dataloader = DataLoader(dataset, batch_size=8, shuffle=True, collate_fn=collateFunction)
     print(dataset.__len__())
-    print(dataset.__getitem__(0))
+    #print(dataset.__getitem__(0))
     
+    for i in range(50):
+        img, meta, target = dataset.__getitem__(i)
+        print(img.shape, meta.shape, target['boxes'].shape, target['labels'].shape)
     '''
     # test for checking the size of the metadata sequence
     sizes = [0] * 100

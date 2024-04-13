@@ -23,7 +23,7 @@ class EarlyConcatenationDETR(nn.Module):
 
         self.transformer = Transformer(args.hiddenDims, args.numHead, args.numEncoderLayer, args.numDecoderLayer,
                                        args.dimFeedForward, args.dropout)
-        self.dummy = args.dummy
+        #self.dummy = args.dummy
 
         self.queryEmbed = nn.Embedding(args.numQuery, args.hiddenDims)
         self.classEmbed = nn.Linear(args.hiddenDims, args.numClass + 1)
@@ -53,9 +53,9 @@ class EarlyConcatenationDETR(nn.Module):
         # flat meta to [batchSize, n_channels]
         meta = meta.flatten(1).float()
 
-        if self.dummy:
+        #if self.dummy:
             # set each element of the meta to 0
-            meta = torch.zeros_like(meta)
+            #meta = torch.zeros_like(meta)
         meta = self.metaProjection(meta)
 
         # change mate shape, from [batchSize, n_channels] to [1, batchSize, n_channels]
@@ -79,9 +79,9 @@ class EarlyConcatenationDETR(nn.Module):
 
         # extend the mask to include the meta, repeating last row one more time
         # instead of having [batch, dim], I want [batch, dim+1]
+        # it's a boolean mask, so I can just add a column of False
         device = mask.device
-        mask = torch.cat((mask, torch.zeros((mask.shape[0], 1)).to(device)), dim=1)
-
+        mask = torch.cat((mask, torch.zeros((mask.shape[0], 1), dtype=torch.bool).to(device)), dim=1)
         out = self.transformer(features, mask, query, pos)
 
         outputsClass = self.classEmbed(out)

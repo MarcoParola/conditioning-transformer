@@ -35,14 +35,14 @@ weight: ""
 
 
 # MARK: - training config
-lr: 1e-6
+lr: 2e-6
 lrBackbone: 1e-5
-batchSize: 16
+batchSize: 4
 weightDecay: 1e-4
-epochs: 80
+epochs: 200
 lrDrop: 1000
 clipMaxNorm: .1
-patience: 15
+patience: 20
 
 # MARK: - loss
 classCost: 1.
@@ -52,9 +52,9 @@ eosCost: .1
 
 # MARK: - dataset
 dataDir: ${hydra:runtime.cwd}/data
-trainAnnFile: ${hydra:runtime.cwd}/data/medium/Train.json
-valAnnFile: ${hydra:runtime.cwd}/data/medium/Valid.json
-testAnnFile: ${hydra:runtime.cwd}/data/orig/Test.json
+trainAnnFile: ${hydra:runtime.cwd}/data/orig/Train.json
+valAnnFile: ${hydra:runtime.cwd}/data/orig/Valid.json
+testAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
 
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint
