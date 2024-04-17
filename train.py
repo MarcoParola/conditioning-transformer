@@ -16,9 +16,15 @@ from src.utils import load_model
 from src.utils import cast2Float
 from src.utils import EarlyStopping
 
+import torch.distributed as dist
+
 @hydra.main(config_path="config", config_name="config")
 def main(args):
     print("Starting training...")   
+
+    #os.environ['MASTER_ADDR'] = 'localhost'
+    #os.environ['MASTER_PORT'] = '12355'    
+    #dist.init_process_group("nccl", rank=0, world_size=1)
 
     wandb.init(entity=args.wandbEntity, project=args.wandbProject, config=dict(args))
     torch.manual_seed(args.seed)

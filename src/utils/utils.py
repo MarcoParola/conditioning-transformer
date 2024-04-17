@@ -35,6 +35,9 @@ def load_model(args):
     elif args.model == 'early-concat-yolos':
         from src.models.yolos.earlyConcatYolos import EarlyConcatenationYOLOS
         model = EarlyConcatenationYOLOS(args)
+    elif args.model == 'enhanced-yolos':
+        from src.models.yolos.enhancedYolos import EnhancedYolos
+        model = EnhancedYolos(args)
     else:
         raise ValueError(f'unknown model: {args.model}')
 

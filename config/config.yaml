@@ -1,6 +1,7 @@
 defaults:
   - _self_
   - metadataScaling
+  - enhancer
   - yolos
   
 seed: 42
@@ -35,14 +36,14 @@ weight: ""
 
 
 # MARK: - training config
-lr: 2e-6
+lr: 1e-6
 lrBackbone: 1e-5
-batchSize: 4
+batchSize: 16
 weightDecay: 1e-4
-epochs: 200
+epochs: 100
 lrDrop: 1000
 clipMaxNorm: .1
-patience: 20
+patience: 25
 
 # MARK: - loss
 classCost: 1.
@@ -54,7 +55,7 @@ eosCost: .1
 dataDir: ${hydra:runtime.cwd}/data
 trainAnnFile: ${hydra:runtime.cwd}/data/orig/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/orig/Valid.json
-testAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
+testAnnFile: ${hydra:runtime.cwd}/data/orig/Test.json
 
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint

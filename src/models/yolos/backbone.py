@@ -392,10 +392,10 @@ def _conv_filter(state_dict, patch_size=16):
         out_dict[k] = v
     return out_dict
 
-def tiny(pretrained=None, **kwargs):
+def tiny(pretrained=None, in_chans=3, **kwargs):
     model = VisionTransformer(
                 patch_size=16, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4, qkv_bias=True,
-                norm_layer=partial(nn.LayerNorm, eps=1e-6))
+                norm_layer=partial(nn.LayerNorm, eps=1e-6), in_chans=in_chans, **kwargs)
     if pretrained: 
         # checkpoint = torch.load('deit_tiny_patch16_224-a1311bcf.pth', map_location="cpu")
         # checkpoint = torch.hub.load_state_dict_from_url(
@@ -407,10 +407,10 @@ def tiny(pretrained=None, **kwargs):
     return model, 192
 
     
-def small(pretrained=None, **kwargs):
+def small(pretrained=None, in_chans=3, **kwargs):
     model = VisionTransformer(
         patch_size=16, embed_dim=384, depth=12, num_heads=6, mlp_ratio=4, qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), in_chans=in_chans, **kwargs)
     if pretrained:
         # checkpoint = torch.load('deit_small_patch16_224-cd65a155.pth', map_location="cpu")
         # checkpoint = torch.hub.load_state_dict_from_url(
@@ -422,11 +422,11 @@ def small(pretrained=None, **kwargs):
     return model, 384
 
 
-def small_dWr(pretrained=None, **kwargs):
+def small_dWr(pretrained=None, in_chans=3, **kwargs):
     model = VisionTransformer(
         img_size=240, 
         patch_size=16, embed_dim=330, depth=14, num_heads=6, mlp_ratio=4, qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), in_chans=in_chans, **kwargs)
     if pretrained:
         # checkpoint = torch.load('fa_deit_ldr_14_330_240.pth', map_location="cpu")
         checkpoint = torch.load(pretrained, map_location="cpu")
@@ -434,10 +434,10 @@ def small_dWr(pretrained=None, **kwargs):
     return model, 330
 
 
-def base(pretrained=None, **kwargs):
+def base(pretrained=None, in_chans=3, **kwargs):
     model = VisionTransformer(
         img_size=384, patch_size=16, embed_dim=768, depth=12, num_heads=12, mlp_ratio=4, qkv_bias=True,
-        norm_layer=partial(nn.LayerNorm, eps=1e-6),is_distill=True, **kwargs)
+        norm_layer=partial(nn.LayerNorm, eps=1e-6),is_distill=True, in_chans=in_chans, **kwargs)
     if pretrained:
         # checkpoint = torch.load('deit_base_distilled_patch16_384-d0272ac0.pth', map_location="cpu")
         # checkpoint = torch.hub.load_state_dict_from_url(
