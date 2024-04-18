@@ -26,6 +26,7 @@ class EnhancedYolos(nn.Module):
         else:
             raise ValueError(f'backbone {args.yolos.backboneName} not supported')
         
+        self.enhance_dummy = args.enhance_dummy
         self.enhance_channels = args.enhance_channels
 
         self.backbone.finetune_det(
@@ -46,14 +47,18 @@ class EnhancedYolos(nn.Module):
     
     def forward(self, x: Tensor, meta=None) -> Dict[str, Union[Tensor, List[Dict[str, Tensor]]]]:
 
-        # enhance the image
         x = x[:, 0:1, :, :]
-        self.thermalx.eval()
-        with torch.no_grad():
-            embedding = self.thermalx(x, x)
+        enhanced_img = None
 
-        x = x.repeat(1, self.enhance_channels, 1, 1)
-        enhanced_img = self.enhance(x, embedding)
+        if self.enhance_dummy:
+            enhanced_img = x.repeat(1, self.enhance_channels, 1, 1)
+        else
+            self.thermalx.eval()
+            with torch.no_grad():
+                embedding = self.thermalx(x, x)
+
+            x = x.repeat(1, self.enhance_channels, 1, 1)
+            enhanced_img = self.enhance(x, embedding)
 
         # debug
         '''
