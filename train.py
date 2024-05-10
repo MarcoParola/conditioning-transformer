@@ -78,7 +78,7 @@ def main(args):
             metadata = metadata.to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
             # gc every 50 batches
-            if batch % 1000 == 0:
+            if batch % 700 == 0:
                 torch.cuda.empty_cache()
                 gc.collect()
 

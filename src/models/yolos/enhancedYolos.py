@@ -52,7 +52,7 @@ class EnhancedYolos(nn.Module):
 
         if self.enhance_dummy:
             enhanced_img = x.repeat(1, self.enhance_channels, 1, 1)
-        else
+        else:
             self.thermalx.eval()
             with torch.no_grad():
                 embedding = self.thermalx(x, x)
