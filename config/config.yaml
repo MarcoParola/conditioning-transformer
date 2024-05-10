@@ -43,7 +43,7 @@ weightDecay: 1e-4
 epochs: 100
 lrDrop: 1000
 clipMaxNorm: .1
-patience: 25
+patience: 10
 
 # MARK: - loss
 classCost: 1.
@@ -53,9 +53,9 @@ eosCost: .1
 
 # MARK: - dataset
 dataDir: ${hydra:runtime.cwd}/data
-trainAnnFile: ${hydra:runtime.cwd}/data/orig/Train.json
-valAnnFile: ${hydra:runtime.cwd}/data/orig/Valid.json
-testAnnFile: ${hydra:runtime.cwd}/data/orig/Test.json
+trainAnnFile: ${hydra:runtime.cwd}/data/small/Train.json
+valAnnFile: ${hydra:runtime.cwd}/data/small/Valid.json
+testAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
 
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint

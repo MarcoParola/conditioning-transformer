@@ -49,7 +49,9 @@ def main(args):
     
     # set model and criterion, load weights if available
     criterion = SetCriterion(args).to(device)
-    model = load_model(args).to(device)    
+    model = load_model(args)
+    model = torch.nn.DataParallel(model)
+    model = model.to(device)
 
     # separate learning rate
     paramDicts = [

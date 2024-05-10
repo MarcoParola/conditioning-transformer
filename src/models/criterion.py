@@ -18,6 +18,10 @@ class SetCriterion(nn.Module):
         self.giouCost = args.giouCost
 
         emptyWeight = torch.ones(args.numClass + 1)
+        emptyWeight[0] = 5841139 / 5841139
+        emptyWeight[1] = 5841139 / 293280
+        emptyWeight[2] = 5841139 / 32393
+        emptyWeight[3] = 5841139 / 701255
         emptyWeight[-1] = args.eosCost
         self.register_buffer('emptyWeight', emptyWeight)
 
