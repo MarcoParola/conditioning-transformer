@@ -13,13 +13,13 @@ class Yolos(nn.Module):
     def __init__(self, args):
         super().__init__()
         if args.yolos.backboneName == 'tiny':
-            self.backbone, hidden_dim = tiny(pretrained=args.yolos.pre_trained)
+            self.backbone, hidden_dim = tiny(in_chans=args.inChans, pretrained=args.yolos.pre_trained)
         elif args.yolos.backboneName == 'small':
-            self.backbone, hidden_dim = small(pretrained=args.yolos.pre_trained)
+            self.backbone, hidden_dim = small(in_chans=args.inChans, pretrained=args.yolos.pre_trained)
         elif args.yolos.backboneName == 'base':
-            self.backbone, hidden_dim = base(pretrained=args.yolos.pre_trained)
+            self.backbone, hidden_dim = base(in_chans=args.inChans, pretrained=args.yolos.pre_trained)
         elif args.yolos.backboneName == 'small_dWr':
-            self.backbone, hidden_dim = small_dWr(pretrained=args.yolos.pre_trained)
+            self.backbone, hidden_dim = small_dWr(in_chans=args.inChans, pretrained=args.yolos.pre_trained)
         else:
             raise ValueError(f'backbone {args.yolos.backboneName} not supported')
         

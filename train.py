@@ -22,18 +22,14 @@ import torch.distributed as dist
 def main(args):
     print("Starting training...")   
 
-    #os.environ['MASTER_ADDR'] = 'localhost'
-    #os.environ['MASTER_PORT'] = '12355'    
-    #dist.init_process_group("nccl", rank=0, world_size=1)
-
     wandb.init(entity=args.wandbEntity, project=args.wandbProject, config=dict(args))
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
     os.makedirs(args.outputDir, exist_ok=True)
 
     # load data
-    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.sequenceLength, dummy=args.dummy, scaling_thresholds=args.scaleMetadata)
-    val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, args.sequenceLength, dummy=args.dummy, scaling_thresholds=args.scaleMetadata)
+    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass)
+    val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass)
     
     train_dataloader = DataLoader(train_dataset, 
         batch_size=args.batchSize, 
@@ -49,9 +45,7 @@ def main(args):
     
     # set model and criterion, load weights if available
     criterion = SetCriterion(args).to(device)
-    model = load_model(args)
-    model = torch.nn.DataParallel(model)
-    model = model.to(device)
+    model = load_model(args).to(device)    
 
     # separate learning rate
     paramDicts = [
@@ -75,9 +69,8 @@ def main(args):
         total_metrics = None  # Initialize total_metrics
 
         # MARK: - training
-        for batch, (imgs, metadata, targets) in enumerate(tqdm(train_dataloader)):
+        for batch, (imgs, targets) in enumerate(tqdm(train_dataloader)):
             imgs = imgs.to(device)
-            metadata = metadata.to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
             # gc every 50 batches
             if batch % 700 == 0:
@@ -86,10 +79,10 @@ def main(args):
 
             if args.amp:
                 with amp.autocast():
-                    out = model(imgs, metadata)
+                    out = model(imgs)
                 out = cast2Float(out) # cast output to float to overcome amp training issue
             else:
-                out = model(imgs, metadata)
+                out = model(imgs)
 
             metrics = criterion(out, targets)
             
@@ -132,31 +125,29 @@ def main(args):
 
         
         # MARK: - validation
-        if batch == batches - 1:
-            model.eval()
-            criterion.eval()
-            with torch.no_grad():
-                valMetrics = []
-                losses = []
-                for imgs, metadata, targets in tqdm(val_dataloader):
-                    imgs = imgs.to(device)
-                    metadata = metadata.to(device)
-                    targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-                    out = model(imgs, metadata)
+        model.eval()
+        criterion.eval()
+        with torch.no_grad():
+            valMetrics = []
+            losses = []
+            for imgs, targets in tqdm(val_dataloader):
+                imgs = imgs.to(device)
+                targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+                out = model(imgs)
 
-                    metrics = criterion(out, targets)
-                    valMetrics.append(metrics)
-                    loss = sum(v for k, v in metrics.items() if 'loss' in k)
-                    losses.append(loss.cpu().item())
+                metrics = criterion(out, targets)
+                valMetrics.append(metrics)
+                loss = sum(v for k, v in metrics.items() if 'loss' in k)
+                losses.append(loss.cpu().item())
 
-                valMetrics = {k: torch.stack([m[k] for m in valMetrics]).mean() for k in valMetrics[0]}
-                avgLoss = np.mean(losses)
-                wandb.log({"val/loss": avgLoss}, step=epoch * batches)
-                for k,v in valMetrics.items():
-                    wandb.log({f"val/{k}": v.item()}, step=batch + epoch * batches)
+            valMetrics = {k: torch.stack([m[k] for m in valMetrics]).mean() for k in valMetrics[0]}
+            avgLoss = np.mean(losses)
+            wandb.log({"val/loss": avgLoss}, step=epoch * batches)
+            for k,v in valMetrics.items():
+                wandb.log({f"val/{k}": v.item()}, step=batch + epoch * batches)
 
-            model.train()
-            criterion.train()
+        model.train()
+        criterion.train()
 
         # MARK: - save model
         if avgLoss < prevBestLoss:
@@ -169,6 +160,36 @@ def main(args):
         if early_stopping(avgLoss):
             print('[+] Early stopping at epoch {}'.format(epoch))
             break
+
+
+    # MARK: - test
+    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass)
+    test_dataloader = DataLoader(test_dataset, 
+        batch_size=1, 
+        shuffle=False, 
+        collate_fn=collateFunction,
+        num_workers=args.numWorkers)
+
+    model.eval()
+    criterion.eval()
+    with torch.no_grad():
+        valMetrics = []
+        losses = []
+        for imgs, targets in tqdm(test_dataloader):
+            imgs = imgs.to(device)
+            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+            out = model(imgs)
+
+            metrics = criterion(out, targets)
+            valMetrics.append(metrics)
+            loss = sum(v for k, v in metrics.items() if 'loss' in k)
+            losses.append(loss.cpu().item())
+
+        valMetrics = {k: torch.stack([m[k] for m in valMetrics]).mean() for k in valMetrics[0]}
+        avgLoss = np.mean(losses)
+        wandb.log({"test/loss": avgLoss}, step=epoch * batches)
+        for k,v in valMetrics.items():
+            wandb.log({f"test/{k}": v.item()}, step=batch + epoch * batches)
 
     wandb.finish()
 

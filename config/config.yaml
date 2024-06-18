@@ -25,6 +25,7 @@ numBlocks:
   - 6
   - 6
   - 6
+inChans: 1
 
 # MARK: - yolo dataset
 targetHeight: 608
@@ -46,16 +47,21 @@ clipMaxNorm: .1
 patience: 10
 
 # MARK: - loss
-classCost: 1.
+classCost: .01
 bboxCost: 5.
 giouCost: 2.
 eosCost: .1
 
 # MARK: - dataset
-dataDir: ${hydra:runtime.cwd}/data
+dataDir: ${hydra:runtime.cwd}/data/
+#dataDir: /home/andreas/data/harborfront/
 trainAnnFile: ${hydra:runtime.cwd}/data/small/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/small/Valid.json
 testAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
+trainVideoFrames: ${hydra:runtime.cwd}/data/small/Train
+valVideoFrames: ${hydra:runtime.cwd}/data/small/Valid
+testVideoFrames: ${hydra:runtime.cwd}/data/small/Test
+videoDir: ${hydra:runtime.cwd}/data/Video Clips
 
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint

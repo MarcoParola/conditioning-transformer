@@ -61,13 +61,13 @@ class DenseBlock(nn.Module):
 
 
 class DenseNet(nn.Module):
-    def __init__(self, numGroups: int, growthRate: int, numBlocks: List[int]):
+    def __init__(self, numGroups: int, growthRate: int, numBlocks: List[int], inChannels: int = 3):
         super(DenseNet, self).__init__()
 
         self.outChannels = 64
 
         self.input = nn.Sequential(
-            nn.Conv2d(3, self.outChannels, 7, padding=3),
+            nn.Conv2d(inChannels, self.outChannels, 7, padding=3),
             nn.GroupNorm(numGroups, self.outChannels),
             nn.ReLU(),
             nn.MaxPool2d(2)
@@ -103,5 +103,5 @@ class Joiner(nn.Module):
 
 def buildBackbone(args):
     positionEmbedding = PositionEmbeddingSine(args.hiddenDims // 2)
-    denseNet = DenseNet(args.numGroups, args.growthRate, args.numBlocks)
+    denseNet = DenseNet(args.numGroups, args.growthRate, args.numBlocks, args.inChans)
     return Joiner(denseNet, positionEmbedding)
