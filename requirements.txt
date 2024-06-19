@@ -62,3 +62,4 @@ triton
 typing_extensions
 urllib3
 wandb
+einops
