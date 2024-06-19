@@ -58,10 +58,11 @@ dataDir: ${hydra:runtime.cwd}/data/
 trainAnnFile: ${hydra:runtime.cwd}/data/small/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/small/Valid.json
 testAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
-trainVideoFrames: ${hydra:runtime.cwd}/data/small/Train
-valVideoFrames: ${hydra:runtime.cwd}/data/small/Valid
-testVideoFrames: ${hydra:runtime.cwd}/data/small/Test
+trainVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Train
+valVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Valid
+testVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Test
 videoDir: ${hydra:runtime.cwd}/data/Video Clips
+numFrames: 10
 
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint
