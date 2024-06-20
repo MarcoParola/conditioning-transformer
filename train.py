@@ -3,7 +3,6 @@ import numpy as np
 import torch
 from torch.cuda import amp
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 import wandb
 import hydra
@@ -56,7 +55,6 @@ def main(args):
 
     early_stopping = EarlyStopping(patience=args.patience)
     optimizer = AdamW(paramDicts, args.lr, weight_decay=args.weightDecay)
-    lrScheduler = StepLR(optimizer, args.lrDrop)
     prevBestLoss = np.inf
     batches = len(train_dataloader)
     scaler = amp.GradScaler()
@@ -116,7 +114,6 @@ def main(args):
         avg_loss = total_loss / len(train_dataloader)
         avg_metrics = {k: v / len(train_dataloader) for k, v in total_metrics.items()}
 
-        lrScheduler.step()
         wandb.log({"train/loss": avg_loss}, step=epoch * batches)
         print(f'Epoch {epoch}, loss: {avg_loss:.8f}')
 

@@ -26,7 +26,7 @@ def main(args):
     os.makedirs(args.outputDir, exist_ok=True)
 
     # load data
-    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, args.sequenceLength, dummy=args.dummy, scaling_thresholds=args.scaleMetadata)
+    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass)
     test_dataloader = DataLoader(test_dataset, 
         batch_size=args.batchSize, 
         shuffle=False, 

@@ -37,18 +37,18 @@ weight: ""
 
 
 # MARK: - training config
-lr: 1e-6
+lr: 5e-7
 lrBackbone: 1e-5
 batchSize: 16
 weightDecay: 1e-4
 epochs: 100
 lrDrop: 1000
 clipMaxNorm: .1
-patience: 10
+patience: 5
 
 # MARK: - loss
-classCost: .01
-bboxCost: 5.
+classCost: .005
+bboxCost: 4.
 giouCost: 2.
 eosCost: .1
 

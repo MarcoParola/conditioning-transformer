@@ -27,7 +27,7 @@ def main(args):
     matcher = HungarianMatcher(args.classCost, args.bboxCost, args.giouCost)
 
     # load data and model
-    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, args.sequenceLength, args.scaleMetadata)
+    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass)
     model = load_model(args).to(device)  
     
     # multi-GPU training
