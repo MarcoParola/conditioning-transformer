@@ -38,6 +38,9 @@ def load_model(args):
     elif args.model == 'enhanced-yolos':
         from src.models.yolos.enhancedYolos import EnhancedYolos
         model = EnhancedYolos(args)
+    elif args.model == 'vsr-yolos':
+        from src.models.yolos.vsr_yolos import VSRYolos
+        model = VSRYolos(args)
     else:
         raise ValueError(f'unknown model: {args.model}')
 
