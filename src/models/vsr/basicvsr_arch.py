@@ -132,7 +132,7 @@ class BasicVSR(nn.Module):
             rlt = torch.mean(rlt, dim=2, keepdim=True)
 
         # return only the first frame but with the same shape as the input
-        rlt = rlt[:, 0, :, :, :].unsqueeze(1)
+        rlt = rlt[:, 0, :, :, :]
         return rlt
 
 #############################
@@ -182,9 +182,11 @@ def main(args):
         print(j)
         img, target = dataset.__getitem__(j)
         img = img.unsqueeze(0)
+        img = torch.randn(1, 4, 1, 144, 192)
         rlt = model(img)
         print(rlt.size())
-    
+
+        '''
         from matplotlib import pyplot as plt
         for i in range(1):
             fig, ax = plt.subplots(1, 3, figsize=(10,5))
@@ -194,6 +196,7 @@ def main(args):
             diff = img[0][i] - rlt[0][i]
             ax[2].imshow(diff.permute(1, 2, 0).detach().numpy())
             plt.savefig(f'img_{j}_{i}.png')
+        '''
 
         
     

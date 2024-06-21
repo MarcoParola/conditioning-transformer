@@ -58,11 +58,17 @@ dataDir: ${hydra:runtime.cwd}/data/
 trainAnnFile: ${hydra:runtime.cwd}/data/small/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/small/Valid.json
 testAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
+
+# MARK: - video dataset
 trainVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Train
 valVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Valid
 testVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Test
 videoDir: ${hydra:runtime.cwd}/data/Video Clips
 numFrames: 10
+
+spynet:
+  weights: ${hydra:runtime.cwd}/checkpoint/spynet/network-sintel-final.pytorch
+  freeze: True
 
 # MARK: - miscellaneous
 outputDir: ${hydra:runtime.cwd}/checkpoint
