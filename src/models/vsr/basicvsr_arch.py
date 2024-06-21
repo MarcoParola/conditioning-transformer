@@ -131,6 +131,8 @@ class BasicVSR(nn.Module):
         if c == 1:
             rlt = torch.mean(rlt, dim=2, keepdim=True)
 
+        # return only the first frame but with the same shape as the input
+        rlt = rlt[:, 0, :, :, :].unsqueeze(1)
         return rlt
 
 #############################
@@ -177,14 +179,14 @@ def main(args):
     # print(rlt.size())
 
     for j in range(4):
+        print(j)
         img, target = dataset.__getitem__(j)
         img = img.unsqueeze(0)
         rlt = model(img)
         print(rlt.size())
-
-        import gc
+    
         from matplotlib import pyplot as plt
-        for i in range(4):
+        for i in range(1):
             fig, ax = plt.subplots(1, 3, figsize=(10,5))
             ax[0].imshow(img[0][i].permute(1, 2, 0).detach().numpy())
             ax[1].imshow(rlt[0][i].permute(1, 2, 0).detach().numpy())
@@ -193,11 +195,7 @@ def main(args):
             ax[2].imshow(diff.permute(1, 2, 0).detach().numpy())
             plt.savefig(f'img_{j}_{i}.png')
 
-        # clear memory with garbage collector
-        del rlt
-        import time
-        time.sleep(10)
-        gc.collect()
+        
     
 
 
