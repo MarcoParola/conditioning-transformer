@@ -54,3 +54,19 @@ def load_model(args):
         model = torch.nn.DataParallel(model)
 
     return model 
+
+
+def load_datasets(args):
+    if args.model == 'vsr-yolos':
+        from src.datasets.coco_video import VideoCOCODataset
+        train_dataset = VideoCOCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.trainVideoFrames, args.numFrames)
+        val_dataset = VideoCOCODataset(args.dataDir, args.valAnnFile, args.numClass, args.valVideoFrames, args.numFrames)
+        test_dataset = VideoCOCODataset(args.dataDir, args.testAnnFile, args.numClass, args.testVideoFrames, args.numFrames)
+        
+    else:
+        from src.datasets.coco import COCODataset
+        train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass)
+        val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass)
+        test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass)
+
+    return train_dataset, val_dataset, test_dataset

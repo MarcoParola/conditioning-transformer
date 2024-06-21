@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from src.models import SetCriterion
 from src.datasets import collateFunction, COCODataset
-from src.utils import load_model
+from src.utils import load_model, load_datasets
 from src.utils import cast2Float
 from src.utils import EarlyStopping
 
@@ -27,8 +27,7 @@ def main(args):
     os.makedirs(args.outputDir, exist_ok=True)
 
     # load data
-    train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass)
-    val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass)
+    train_dataset, val_dataset, test_dataset = load_datasets(args)
     
     train_dataloader = DataLoader(train_dataset, 
         batch_size=args.batchSize, 
@@ -38,6 +37,12 @@ def main(args):
     
     val_dataloader = DataLoader(val_dataset, 
         batch_size=args.batchSize, 
+        shuffle=False, 
+        collate_fn=collateFunction,
+        num_workers=args.numWorkers)
+
+    test_dataloader = DataLoader(test_dataset, 
+        batch_size=1, 
         shuffle=False, 
         collate_fn=collateFunction,
         num_workers=args.numWorkers)
@@ -159,13 +164,7 @@ def main(args):
             break
 
 
-    # MARK: - test
-    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass)
-    test_dataloader = DataLoader(test_dataset, 
-        batch_size=1, 
-        shuffle=False, 
-        collate_fn=collateFunction,
-        num_workers=args.numWorkers)
+    
 
     model.eval()
     criterion.eval()
