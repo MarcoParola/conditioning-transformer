@@ -43,7 +43,6 @@ class VSRYolos(nn.Module):
     def forward(self, x: Tensor, meta=None) -> Dict[str, Union[Tensor, List[Dict[str, Tensor]]]]:
 
         x = self.vsr_enhancer(x)
-        print(x.size())
 
         x = self.backbone(x)
         x = x.unsqueeze(0)
