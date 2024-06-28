@@ -3,6 +3,7 @@ defaults:
   - metadataScaling
   - enhancer
   - yolos
+  - estrnn
   
 seed: 42
 numGroups: 8
@@ -55,16 +56,16 @@ eosCost: .1
 # MARK: - dataset
 dataDir: ${hydra:runtime.cwd}/data/
 #dataDir: /home/andreas/data/harborfront/
-trainAnnFile: ${hydra:runtime.cwd}/data/orig/Train.json
-valAnnFile: ${hydra:runtime.cwd}/data/orig/Valid.json
-testAnnFile: ${hydra:runtime.cwd}/data/orig/Test.json
+trainAnnFile: ${hydra:runtime.cwd}/data/small/Train.json
+valAnnFile: ${hydra:runtime.cwd}/data/small/Valid.json
+testAnnFile: ${hydra:runtime.cwd}/data/small/Test.json
 
 # MARK: - video dataset
 trainVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Train
 valVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Valid
 testVideoFrames: ${hydra:runtime.cwd}/data/small/videoFrames/Test
 videoDir: ${hydra:runtime.cwd}/data/Video Clips
-numFrames: 10
+numFrames: 5
 
 spynet:
   weights: ${hydra:runtime.cwd}/checkpoint/spynet/network-sintel-final.pytorch

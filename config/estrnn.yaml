@@ -1,0 +1,7 @@
+estrnn:
+  n_features: 16
+  n_blocks: 15
+  future_frames: 0
+  past_frames: 0
+  activation: gelu
+  
