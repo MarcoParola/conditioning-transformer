@@ -14,6 +14,7 @@ def compute_stats(json_data):
         num_occurrences = category_count[category["id"]] if category["id"] in category_count else 0
         print("-%s: %d" % (category["name"], num_occurrences))
 
+    '''
     # compute date distribution by month
     date_count = dict()
     for annotation in json_data["images"]:
@@ -26,11 +27,24 @@ def compute_stats(json_data):
     sorted_dates = sorted(date_count.items(), key=lambda x: x[0])
     for date, count in sorted_dates:
         print("%s: %d" % (date, count))
+    '''
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True)
     args = parser.parse_args()
-    dataset = json.load(open(args.dataset, "r"))
-    compute_stats(dataset)
+
+    # open json file and modify each annotation by substituting the "file_name" field by removing the substring "data/"
+    # e.g. "data/frames/20200514/clip_10_1744/image_0015.jpg" -> "frames/20200514/clip_10_1744/image_0015.jpg"
+
+    with open(args.dataset, "r") as f:
+        data = json.load(f)
+        for i in range(len(data["images"])):
+            data["images"][i]["file_name"] = data["images"][i]["file_name"].replace("data/", "")
+        with open(args.dataset, "w") as f:
+            json.dump(data, f)
+
+
+    #dataset = json.load(open(args.dataset, "r"))
+    #compute_stats(dataset)
