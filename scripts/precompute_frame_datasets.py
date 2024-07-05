@@ -10,7 +10,7 @@ from src.datasets.coco import COCODataset
 
 original_freq = 25
 new_freq = 2
-frames_to_extract = 10
+frames_to_extract = 6
 
 @hydra.main(config_path='../config', config_name='config')
 def extract_frames(args):
@@ -26,6 +26,8 @@ def extract_frames(args):
     # create dir if not exists
     train_frame_path = os.path.join(args.dataDir, args.trainVideoFrames)
     os.makedirs(train_frame_path, exist_ok=True)
+    print(train_frame_path)
+    
     
     for i in range(train_dataset.__len__()):
         imgID = train_dataset.ids[i]
@@ -36,21 +38,28 @@ def extract_frames(args):
         vid = imageio.get_reader(video_path, 'ffmpeg')
         
         frame_num = int(frame_num.split('_')[-1]) + 1
-        print(frame_num, frame_num * original_freq)
+        #print(frame_num, frame_num * original_freq)
         current_frame_num = frame_num * original_freq
         
-        # check if the directory exists, if not create it
+        # check if the directory exists, if not create it if yes, skip
         file_dir = file_name.split('/')[:-1]
         file_dir = os.path.join(train_frame_path, *file_dir)
-        os.makedirs(file_dir, exist_ok=True)
 
-        for j in range(1, frames_to_extract + 1):
-            new_frame_num = current_frame_num - j * new_freq
-            new_frame = vid.get_data(new_frame_num)
-            new_frame_name = file_name.split('.')[0] + f"_frame_{-j}.jpg"
-            new_frame_path = os.path.join(train_frame_path, new_frame_name)
-            imageio.imwrite(new_frame_path, new_frame)
-            print(new_frame_path)
+        # check if the directory exists and contains a file starting with the same name
+        if not os.path.exists(file_dir):
+            print(file_dir)
+            os.makedirs(file_dir, exist_ok=True)
+
+        files = os.listdir(file_dir)
+        if any([file_name.split('.')[0] in file for file in files]):
+            continue
+        else:
+            for j in range(1, frames_to_extract + 1):
+                new_frame_num = current_frame_num - j * new_freq
+                new_frame = vid.get_data(new_frame_num)
+                new_frame_name = file_name.split('.')[0] + f"_frame_{-j}.jpg"
+                new_frame_path = os.path.join(train_frame_path, new_frame_name)
+                imageio.imwrite(new_frame_path, new_frame)
             
         
     
@@ -79,15 +88,22 @@ def extract_frames(args):
         # check if the directory exists, if not create it
         file_dir = file_name.split('/')[:-1]
         file_dir = os.path.join(val_frame_path, *file_dir)
-        os.makedirs(file_dir, exist_ok=True)
 
-        for j in range(1, frames_to_extract + 1):
-            new_frame_num = current_frame_num - j * new_freq
-            new_frame = vid.get_data(new_frame_num)
-            new_frame_name = file_name.split('.')[0] + f"_frame_{-j}.jpg"
-            new_frame_path = os.path.join(val_frame_path, new_frame_name)
-            imageio.imwrite(new_frame_path, new_frame)
-            print(new_frame_path)
+        if os.path.exists(file_dir):
+            print(file_dir)
+            os.makedirs(file_dir, exist_ok=True)
+
+        files = os.listdir(file_dir)
+        if any([file_name.split('.')[0] in file for file in files]):
+            continue
+        else:
+            for j in range(1, frames_to_extract + 1):
+                new_frame_num = current_frame_num - j * new_freq
+                new_frame = vid.get_data(new_frame_num)
+                new_frame_name = file_name.split('.')[0] + f"_frame_{-j}.jpg"
+                new_frame_path = os.path.join(val_frame_path, new_frame_name)
+                imageio.imwrite(new_frame_path, new_frame)
+
 
 
     # TEST
@@ -115,18 +131,21 @@ def extract_frames(args):
         # check if the directory exists, if not create it
         file_dir = file_name.split('/')[:-1]
         file_dir = os.path.join(test_frame_path, *file_dir)
-        os.makedirs(file_dir, exist_ok=True)
 
-        for j in range(1, frames_to_extract + 1):
-            new_frame_num = current_frame_num - j * new_freq
-            new_frame = vid.get_data(new_frame_num)
-            new_frame_name = file_name.split('.')[0] + f"_frame_{-j}.jpg"
-            new_frame_path = os.path.join(test_frame_path, new_frame_name)
-            imageio.imwrite(new_frame_path, new_frame)
-            print(new_frame_path)
+        if os.path.exists(file_dir):
+            print(file_dir)
+            os.makedirs(file_dir, exist_ok=True)
 
-
-
+        files = os.listdir(file_dir)
+        if any([file_name.split('.')[0] in file for file in files]):
+            continue
+        else:
+            for j in range(1, frames_to_extract + 1):
+                new_frame_num = current_frame_num - j * new_freq
+                new_frame = vid.get_data(new_frame_num)
+                new_frame_name = file_name.split('.')[0] + f"_frame_{-j}.jpg"
+                new_frame_path = os.path.join(test_frame_path, new_frame_name)
+                imageio.imwrite(new_frame_path, new_frame)
         
             
 
