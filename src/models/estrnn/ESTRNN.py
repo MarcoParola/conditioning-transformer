@@ -176,12 +176,12 @@ class Reconstructor(nn.Module):
         return self.model(x)
 
 
-class Model(nn.Module):
+class ESTRNN(nn.Module):
     """
     Efficient saptio-temporal recurrent neural network (ESTRNN, ECCV2020)
     """
     def __init__(self, args):
-        super(Model, self).__init__()
+        super(ESTRNN, self).__init__()
         from omegaconf import OmegaConf
         para = args.estrnn
         OmegaConf.set_struct(para, False)  # Temporarily disable struct mode
@@ -207,7 +207,8 @@ class Model(nn.Module):
         s_height = int(height / self.ds_ratio)
         s_width = int(width / self.ds_ratio)
         # forward h structure: (batch_size, channel, height, width)
-        s = torch.zeros(batch_size, self.n_feats, s_height, s_width).to(self.device)
+        s = torch.zeros(batch_size, self.n_feats, s_height, s_width)
+        s = s.to(x.device)
         for i in range(frames):
             h, s = self.cell(x[:, i, :, :, :], s)
             hs.append(h)
@@ -223,12 +224,12 @@ class Model(nn.Module):
         batch_size, frames, channels, height, width = x.shape
         s_height = int(height / self.ds_ratio)
         s_width = int(width / self.ds_ratio)
-        s = torch.zeros(batch_size, self.n_feats, s_height, s_width).to(self.device)
+        s = torch.zeros(batch_size, self.n_feats, s_height, s_width)
         for i in range(frames):
             h, s = self.cell(x[:, i, :, :, :], s)
             hs.append(h)
         for i in range(self.num_fb + self.num_ff):
-            hs.append(torch.randn(*h.shape).to(self.device))
+            hs.append(torch.randn(*h.shape))
         for i in range(self.num_fb, frames + self.num_fb):
             out = self.fusion(hs[i - self.num_fb:i + self.num_ff + 1])
             out = self.recons(out)
@@ -254,30 +255,32 @@ def cost_profile(model, H, W, seq_length):
 @hydra.main(config_path='../../../config', config_name='config')
 def main(args):
      
-    model = Model(args).cuda()
-    '''
-    #resume_file = '/home/marco/Documents/conditioning-transformer/checkpoint/estrnn/ESTRNN_C80B15_BSD_3ms24ms.tar'
-    resume_file = '/home/marco/Documents/conditioning-transformer/checkpoint/estrnn/ESTRNN_C80B15_BSD_3ms24ms (copy)/archive/data.pkl'
-    
-    checkpoint = torch.load(resume_file)
-
-    from collections import OrderedDict
-    # Remove 'module.' prefix if it exists
-    new_state_dict = OrderedDict()
-    for k, v in checkpoint.items():
-        # remove 'module.model.'
-        print(k)
-        name = k[13:] if k.startswith('module.model.') else k
-        new_state_dict[name] = v
-
-    model.load_state_dict(new_state_dict)
-    '''
+    model = ESTRNN(args)
     model.eval()
     
     import os
     from src.datasets import collateFunction, COCODataset, VideoCOCODataset
     dataset = VideoCOCODataset(args.dataDir, args.valAnnFile, args.numClass, args.valVideoFrames, args.numFrames)
 
+    # import dataloader
+    from torch.utils.data import DataLoader
+    dataloader = DataLoader(dataset, batch_size=4, shuffle=False, num_workers=0, collate_fn=collateFunction)
+
+    # get the first batch
+    batch = next(iter(dataloader))
+
+    
+    for i, batch in enumerate(dataloader):
+        if i == 1:
+            break
+
+        print(batch)
+        print(i, batch[0].size())
+        outputs = model(batch[0])
+        print(outputs.size())
+    
+
+    '''
     for j in range(10):
         print(j)
         img, target = dataset.__getitem__(j)
@@ -285,7 +288,6 @@ def main(args):
         img = img.unsqueeze(0)
         print('before model forward', img.size())
         # move to gpu
-        img = img.to('cuda')
         rlt = model(img)
         print(rlt.size())
 
@@ -294,6 +296,7 @@ def main(args):
         # rlt size -> torch.Size([1, 1, 1, 288, 384])
         plt.imshow(rlt.squeeze().cpu().detach().numpy(), cmap='gray')
         plt.show()
+    '''
         
 
 if __name__ == '__main__':

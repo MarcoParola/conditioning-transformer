@@ -41,6 +41,9 @@ def load_model(args):
     elif args.model == 'vsr-yolos':
         from src.models.yolos.vsr_yolos import VSRYolos
         model = VSRYolos(args)
+    elif args.model == 'estrnn-yolos':
+        from src.models.yolos.estrnn_yolos import ESTRNNYolos
+        model = ESTRNNYolos(args)
     else:
         raise ValueError(f'unknown model: {args.model}')
 
@@ -57,7 +60,7 @@ def load_model(args):
 
 
 def load_datasets(args):
-    if args.model == 'vsr-yolos':
+    if args.model == 'vsr-yolos' or args.model == 'estrnn-yolos':
         from src.datasets.coco_video import VideoCOCODataset
         train_dataset = VideoCOCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.trainVideoFrames, args.numFrames)
         val_dataset = VideoCOCODataset(args.dataDir, args.valAnnFile, args.numClass, args.valVideoFrames, args.numFrames)
