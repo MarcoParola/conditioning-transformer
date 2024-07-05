@@ -148,6 +148,19 @@ def main(args):
             for k,v in valMetrics.items():
                 wandb.log({f"val/{k}": v.item()}, step=batch + epoch * batches)
 
+        # check if the model is estrnn-yolos, if so, predict the first 10 images of the val set
+        if args.model == 'estrnn-yolos':
+            for _i in range(10):
+                img, target = val_dataset.__getitem__(_i)
+                pred = model.estrnn_enhancer(img.unsqueeze(0))
+                # save both original and predicted images 
+                from matplotlib import pyplot as plt
+                fig, ax = plt.subplots(1, 2)
+                ax[0].imshow(img[0].squeeze().cpu().numpy(), cmap='gray')
+                ax[1].imshow(pred[0].squeeze().cpu().numpy(), cmap='gray')
+                plt.savefig(f'{wandb.run.dir}/val_epoch{epoch}_img_{_i}.png')
+                
+
         model.train()
         criterion.train()
 
