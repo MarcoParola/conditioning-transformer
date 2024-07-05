@@ -18,13 +18,15 @@ class VideoCOCODataset(Dataset):
             annotation: str, 
             numClass: int = 4,
             video_dir: str = None,
-            numFrames: int = 1):
+            numFrames: int = 1,
+            removeBackground: bool = True,):
         self.root = root
         self.coco = COCO(annotation)
         self.ids = list(self.coco.imgs.keys())
         self.numClass = numClass
         self.video_dir = video_dir
         self.numFrames = numFrames
+        self.removeBackground = removeBackground
         self.transforms = T.Compose([
             T.ToTensor()
         ])
@@ -43,6 +45,10 @@ class VideoCOCODataset(Dataset):
         imgInfo = self.coco.imgs[imgID]        
         imgPath = os.path.join(self.root, imgInfo['file_name'])
         image = Image.open(imgPath).convert('L')
+
+        # crop the pil image by removing the top part, remove the first 96 pixels
+        if self.removeBackground:
+            image = image.crop((0, 96, image.size[0], image.size[1]))
 
         annotations = self.loadAnnotations(imgID, imgInfo['width'], imgInfo['height'])
 
@@ -69,6 +75,19 @@ class VideoCOCODataset(Dataset):
         for annotation in self.coco.imgToAnns[imgID]:
             cat = self.newIndex[annotation['category_id']]
             bbox = annotation['bbox']
+
+            # adapt the annotations to the new image size (it has been removed the top part of the image of 96 pixels)
+            if self.removeBackground:
+                if bbox[1] + bbox[3] < 96:
+                    continue
+
+                bbox[1] -= 96
+                if bbox[1] < 0:
+                    bbox[3] -= 96 - bbox[1]
+                    bbox[1] = 0
+                    if bbox[3] < 5:
+                        continue
+                        
             bbox = [val / imgHeight if i % 2 else val / imgWidth for i, val in enumerate(bbox)]
             ans.append(bbox + [cat])
 
@@ -83,7 +102,12 @@ class VideoCOCODataset(Dataset):
         for i in range(1, self.numFrames+1):
             new_frame_name = file_name.split('/')[-1].split('.')[0] + f"_frame_{-i}.jpg"
             new_frame_path = os.path.join(file_dir, new_frame_name)
-            frames.append(Image.open(new_frame_path).convert('L'))
+            frame = Image.open(new_frame_path).convert('L')
+
+            if self.removeBackground:
+                frame = frame.crop((0, 96, frame.size[0], frame.size[1]))
+
+            frames.append(frame)
         return frames
         
 

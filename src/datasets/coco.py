@@ -17,13 +17,12 @@ class COCODataset(Dataset):
             root: str, 
             annotation: str, 
             numClass: int = 4, 
-            sequenceLength: int = 1, 
-            dummy: bool = False,
-            scaling_thresholds: Dict[str, Tuple[float, float]] = None):
+            removeBackground: bool = True,):
         self.root = root
         self.coco = COCO(annotation)
         self.ids = list(self.coco.imgs.keys())
         self.numClass = numClass
+        self.removeBackground = removeBackground
         self.transforms = T.Compose([
             T.ToTensor()
         ])
@@ -43,7 +42,11 @@ class COCODataset(Dataset):
         imgPath = os.path.join(self.root, imgInfo['file_name'])
         image = Image.open(imgPath).convert('L')
 
-        annotations = self.loadAnnotations(imgID, imgInfo['width'], imgInfo['height'])
+        # crop the pil image by removing the top part, remove the first 96 pixels
+        if self.removeBackground:
+            image = image.crop((0, 96, image.size[0], image.size[1]))
+
+        annotations = self.loadAnnotations(imgID, imgWidth=image.size[0], imgHeight=image.size[1])
 
         if len(annotations) == 0:
             targets = {
@@ -55,6 +58,7 @@ class COCODataset(Dataset):
                 'labels': torch.as_tensor(annotations[..., -1], dtype=torch.int64)-1,}
 
         image, targets = self.transforms(image, targets)
+
         return image, targets
 
 
@@ -63,6 +67,19 @@ class COCODataset(Dataset):
         for annotation in self.coco.imgToAnns[imgID]:
             cat = self.newIndex[annotation['category_id']]
             bbox = annotation['bbox']
+
+            # adapt the annotations to the new image size (it has been removed the top part of the image of 96 pixels)
+            if self.removeBackground:
+                if bbox[1] + bbox[3] < 96:
+                    continue
+                  
+                bbox[1] -= 96
+                if bbox[1] < 0:
+                    bbox[3] -= 96 - bbox[1]
+                    bbox[1] = 0
+                    if bbox[3] < 5:
+                        continue
+
             bbox = [val / imgHeight if i % 2 else val / imgWidth for i, val in enumerate(bbox)]
             ans.append(bbox + [cat])
 
@@ -85,18 +102,21 @@ def main(args):
 
     num_classes = 4
     data_folder = 'data'
-    data_file = 'data/orig/Test.json'
+    data_file = 'data/new/Test.json'
     data_folder = os.path.join(args.currentDir, data_folder)
     data_file = os.path.join(args.currentDir, data_file)
     dataset = COCODataset(data_folder, data_file, num_classes)  
     dataloader = DataLoader(dataset, batch_size=8, shuffle=True, collate_fn=collateFunction)
     print(dataset.__len__())
-    #print(dataset.__getitem__(0))
+    img, trg = dataset.__getitem__(0)
+    print(img.shape, trg['boxes'].shape, trg['labels'].shape)
+
     
+    '''
     for i in range(50):
         img, target = dataset.__getitem__(i)
         print(img.shape, target['boxes'].shape, target['labels'].shape)
-    '''
+    
     # test for checking the size of the metadata sequence
     sizes = [0] * 100
     from tqdm import tqdm
@@ -104,18 +124,31 @@ def main(args):
         image, meta, target = dataset.__getitem__(j)
         print(image.shape, meta.shape, target['boxes'].shape, target['labels'].shape)
     print(sizes)
-    '''
     
-    '''
+    
+    
     for images, metadata, targets in dataloader:
         print(type(images), type(metadata), type(targets))
         print(metadata)
         print(images.shape, metadata.shape, targets[0]['boxes'].shape, targets[0]['labels'].shape)
     
-    for j in range(dataset.__len__()):
-        image, meta, target = dataset.__getitem__(j)
+    '''
+
+    testing_dir = 'outputs/test/'
+    if not os.path.exists(testing_dir):
+        os.makedirs(testing_dir)
+
+    for j in range(20):
+        image, target = dataset.__getitem__(j)
         fig, ax = plt.subplots()
         ax.imshow(image.permute(1, 2, 0))
+
+        # add title using the image name
+        imgID = dataset.ids[j]
+        imgInfo = dataset.coco.imgs[imgID]
+        ax.set_title(imgInfo['file_name'])
+
+        print(len(target['boxes']))
 
         for i in range(len(target['boxes'])):
             img_w, img_h = image.size(2), image.size(1)
@@ -124,9 +157,14 @@ def main(args):
             w, h = w*img_w, h*img_h
             rect = patches.Rectangle((x,y), w,h, linewidth=1, edgecolor='r', facecolor='none')
             ax.add_patch(rect)
-        plt.show()
-        #plt.close(fig)
-    '''
+        plt.savefig(f'{testing_dir}img_{j}.png')
+        plt.close(fig)
+
+
+ 
+
+    
+        
     
 if __name__ == '__main__':
     main()
