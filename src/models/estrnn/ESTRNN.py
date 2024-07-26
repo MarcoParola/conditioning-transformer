@@ -146,6 +146,10 @@ class RDBCell(nn.Module):
         )
 
     def forward(self, x, s_last):
+        device = next(self.parameters()).device  # Get the device of the model parameters
+        x = x.to(device)  # Move input tensor to the same device
+        s_last = s_last.to(device)
+        
         out = self.F_B0(x)
         out = self.F_B1(out)
         out = self.F_B2(out)
