@@ -46,11 +46,10 @@ def main(args):
     with torch.no_grad():
         testMetrics = []
 
-        for batch, (imgs, metadata, targets) in enumerate(tqdm(test_dataloader)):
+        for batch, (imgs, targets) in enumerate(tqdm(test_dataloader)):
             imgs = imgs.to(device)
-            metadata = metadata.to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-            out = model(imgs, metadata)
+            out = model(imgs)
             metrics = criterion(out, targets)
             testMetrics.append(metrics)
 

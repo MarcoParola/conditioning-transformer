@@ -38,14 +38,14 @@ weight: ""
 
 
 # MARK: - training config
-lr: 2e-6
+lr: 5e-7
 lrBackbone: 1e-5
-batchSize: 4
+batchSize: 8
 weightDecay: 1e-4
 epochs: 100
 lrDrop: 1000
 clipMaxNorm: .1
-patience: 10
+patience: 15
 
 # MARK: - loss
 classCost: .005
@@ -54,9 +54,8 @@ giouCost: 2.5
 eosCost: .1
 
 # MARK: - dataset
-cropBackground: True
-dataDir: ${hydra:runtime.cwd}/data/
-#dataDir: /home/andreas/data/harborfront/
+cropBackground: False
+dataDir: /home/andreas/data/harborfront/
 trainAnnFile: ${hydra:runtime.cwd}/data/new/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/new/Valid.json
 testAnnFile: ${hydra:runtime.cwd}/data/new/Test.json
