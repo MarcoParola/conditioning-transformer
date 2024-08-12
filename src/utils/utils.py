@@ -62,9 +62,9 @@ def load_model(args):
 def load_datasets(args):
     if args.model == 'vsr-yolos' or args.model == 'estrnn-yolos':
         from src.datasets.coco_video import VideoCOCODataset
-        train_dataset = VideoCOCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.trainVideoFrames, args.numFrames)
-        val_dataset = VideoCOCODataset(args.dataDir, args.valAnnFile, args.numClass, args.valVideoFrames, args.numFrames)
-        test_dataset = VideoCOCODataset(args.dataDir, args.testAnnFile, args.numClass, args.testVideoFrames, args.numFrames)
+        train_dataset = VideoCOCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.trainVideoFrames, args.numFrames, dummy=args.dummy)
+        val_dataset = VideoCOCODataset(args.dataDir, args.valAnnFile, args.numClass, args.valVideoFrames, args.numFrames, dummy=args.dummy)
+        test_dataset = VideoCOCODataset(args.dataDir, args.testAnnFile, args.numClass, args.testVideoFrames, args.numFrames, dummy=args.dummy)
         
     else:
         from src.datasets.coco import COCODataset

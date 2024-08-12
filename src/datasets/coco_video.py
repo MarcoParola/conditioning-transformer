@@ -19,7 +19,8 @@ class VideoCOCODataset(Dataset):
             numClass: int = 4,
             video_dir: str = None,
             numFrames: int = 1,
-            removeBackground: bool = True,):
+            removeBackground: bool = True,
+            dummy: bool = False):
         self.root = root
         self.coco = COCO(annotation)
         self.ids = list(self.coco.imgs.keys())
@@ -27,6 +28,7 @@ class VideoCOCODataset(Dataset):
         self.video_dir = video_dir
         self.numFrames = numFrames
         self.removeBackground = removeBackground
+        self.dummy = dummy
         self.transforms = T.Compose([
             T.ToTensor()
         ])
@@ -61,8 +63,10 @@ class VideoCOCODataset(Dataset):
                 'boxes': torch.as_tensor(annotations[..., :-1], dtype=torch.float32),
                 'labels': torch.as_tensor(annotations[..., -1], dtype=torch.int64)-1,}
 
-        frames = self.loadFrames(imgID)
-        
+        if self.dummy:
+            frames = [image] * self.numFrames
+        else:
+            frames = self.loadFrames(imgID)
         frames = [self.transforms(frame, {})[0] for frame in frames]
 
         image, targets = self.transforms(image, targets)

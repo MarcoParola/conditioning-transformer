@@ -55,7 +55,7 @@ eosCost: .1
 
 # MARK: - dataset
 cropBackground: False
-dataDir: /home/andreas/data/harborfront/
+dataDir: ${hydra:runtime.cwd}/data/
 trainAnnFile: ${hydra:runtime.cwd}/data/new/Train.json
 valAnnFile: ${hydra:runtime.cwd}/data/new/Valid.json
 testAnnFile: ${hydra:runtime.cwd}/data/new/Test.json
