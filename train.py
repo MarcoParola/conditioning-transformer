@@ -70,7 +70,7 @@ def main(args):
         wandb.log({"epoch": epoch}, step=epoch * batches)
         total_loss = 0.0
         total_metrics = None  # Initialize total_metrics
-
+        
         # MARK: - training
         for batch, (imgs, targets) in enumerate(tqdm(train_dataloader)):
             imgs = imgs.to(device)
@@ -124,8 +124,8 @@ def main(args):
 
         for k, v in avg_metrics.items():
             wandb.log({f"train/{k}": v}, step=epoch * batches)
-
         
+
         # MARK: - validation
         model.eval()
         criterion.eval()
@@ -146,7 +146,7 @@ def main(args):
             avgLoss = np.mean(losses)
             wandb.log({"val/loss": avgLoss}, step=epoch * batches)
             for k,v in valMetrics.items():
-                wandb.log({f"val/{k}": v.item()}, step=batch + epoch * batches)
+                wandb.log({f"val/{k}": v.item()}, step= epoch * batches)
 
         # check if the model is estrnn-yolos, if so, predict the first 10 images of the val set
         if args.model == 'estrnn-yolos':
@@ -157,7 +157,7 @@ def main(args):
                 from matplotlib import pyplot as plt
                 fig, ax = plt.subplots(1, 2)
                 ax[0].imshow(img[0].squeeze().cpu().numpy(), cmap='gray')
-                ax[1].imshow(pred[0].squeeze().cpu().numpy(), cmap='gray')
+                ax[1].imshow(pred[0].squeeze().detach().cpu().numpy(), cmap='gray')
                 plt.savefig(f'{wandb.run.dir}/val_epoch{epoch}_img_{_i}.png')
                 
 

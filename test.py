@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from src.models import SetCriterion
 from src.datasets import collateFunction, COCODataset
-from src.utils import load_model
+from src.utils import load_model, load_datasets
 from src.utils.misc import cast2Float
 from src.utils.utils import load_weights
 
@@ -26,9 +26,9 @@ def main(args):
     os.makedirs(args.outputDir, exist_ok=True)
 
     # load data
-    test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass)
+    train_dataset, val_dataset, test_dataset = load_datasets(args)
     test_dataloader = DataLoader(test_dataset, 
-        batch_size=args.batchSize, 
+        batch_size=1, 
         shuffle=False, 
         collate_fn=collateFunction,
         num_workers=args.numWorkers)
@@ -46,11 +46,10 @@ def main(args):
     with torch.no_grad():
         testMetrics = []
 
-        for batch, (imgs, metadata, targets) in enumerate(tqdm(test_dataloader)):
+        for batch, (imgs, targets) in enumerate(tqdm(test_dataloader)):
             imgs = imgs.to(device)
-            metadata = metadata.to(device)
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-            out = model(imgs, metadata)
+            out = model(imgs)
             metrics = criterion(out, targets)
             testMetrics.append(metrics)
 
