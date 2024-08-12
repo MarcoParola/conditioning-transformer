@@ -28,7 +28,7 @@ def extract_frames(args):
     os.makedirs(train_frame_path, exist_ok=True)
     print(train_frame_path)
     
-    
+    '''
     for i in range(train_dataset.__len__()):
         imgID = train_dataset.ids[i]
         file_name = train_dataset.coco.imgs[imgID]['file_name']
@@ -61,7 +61,7 @@ def extract_frames(args):
                 new_frame_path = os.path.join(train_frame_path, new_frame_name)
                 imageio.imwrite(new_frame_path, new_frame)
             
-        
+    '''   
     
     # VAL
     print("\n---------- Val set ----------")
@@ -82,14 +82,14 @@ def extract_frames(args):
         vid = imageio.get_reader(video_path, 'ffmpeg')
         
         frame_num = int(frame_num.split('_')[-1]) + 1
-        print(frame_num, frame_num * original_freq)
+        #print(frame_num, frame_num * original_freq)
         current_frame_num = frame_num * original_freq
         
         # check if the directory exists, if not create it
         file_dir = file_name.split('/')[:-1]
         file_dir = os.path.join(val_frame_path, *file_dir)
 
-        if os.path.exists(file_dir):
+        if not os.path.exists(file_dir):
             print(file_dir)
             os.makedirs(file_dir, exist_ok=True)
 
@@ -132,7 +132,7 @@ def extract_frames(args):
         file_dir = file_name.split('/')[:-1]
         file_dir = os.path.join(test_frame_path, *file_dir)
 
-        if os.path.exists(file_dir):
+        if not os.path.exists(file_dir):
             print(file_dir)
             os.makedirs(file_dir, exist_ok=True)
 
