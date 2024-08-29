@@ -188,7 +188,7 @@ class ReconstructorInterpolate(nn.Module):
         self.related_f = self.num_ff + 1 + self.num_fb
         self.n_feats = para.n_features
         self.act_func = actFunc(para.activation)
-        self.rec1 = nn.Conv2d(4 * (5 * self.n_feats), (5 * self.n_feats), kernel_size=3, stride=1, padding=1)
+        self.rec1 = nn.Conv2d((5 * self.n_feats) * (self.related_f), (5 * self.n_feats), kernel_size=3, stride=1, padding=1)
         self.rec2 = nn.Conv2d((5 * self.n_feats), 2 * self.n_feats, kernel_size=3, stride=1, padding=1)
         self.rec3 = nn.Conv2d(2 * self.n_feats, self.n_feats, kernel_size=3, stride=1, padding=1)
         self.rec_last = nn.Conv2d(self.n_feats, self.para.in_channels, kernel_size=3, stride=1, padding=1)
@@ -283,6 +283,8 @@ def cost_profile(model, H, W, seq_length):
 
 @hydra.main(config_path='../../../config', config_name='config')
 def main(args):
+
+    args.numFrames = 5
      
     model_default = ESTRNN(args)
     model_default.eval()
