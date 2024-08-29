@@ -179,6 +179,28 @@ class Reconstructor(nn.Module):
     def forward(self, x):
         return self.model(x)
 
+class ReconstructorInterpolate(nn.Module):
+    def __init__(self, para):
+        super(ReconstructorInterpolate, self).__init__()
+        self.para = para
+        self.num_ff = para.future_frames
+        self.num_fb = para.past_frames
+        self.related_f = self.num_ff + 1 + self.num_fb
+        self.n_feats = para.n_features
+        self.act_func = actFunc(para.activation)
+        self.rec1 = nn.Conv2d(4 * (5 * self.n_feats), (5 * self.n_feats), kernel_size=3, stride=1, padding=1)
+        self.rec2 = nn.Conv2d((5 * self.n_feats), 2 * self.n_feats, kernel_size=3, stride=1, padding=1)
+        self.rec3 = nn.Conv2d(2 * self.n_feats, self.n_feats, kernel_size=3, stride=1, padding=1)
+        self.rec_last = nn.Conv2d(self.n_feats, self.para.in_channels, kernel_size=3, stride=1, padding=1)
+
+    def forward(self, x):
+        out = torch.nn.functional.interpolate(x, scale_factor=2, mode='nearest')
+        out = self.act_func(self.rec1(out))
+        out = torch.nn.functional.interpolate(out, scale_factor=2, mode='nearest')
+        out = self.act_func(self.rec2(out))
+        out = self.rec_last(self.act_func(self.rec3(out)))
+        return out
+
 
 class ESTRNN(nn.Module):
     """
@@ -200,7 +222,10 @@ class ESTRNN(nn.Module):
         self.ds_ratio = 4
         self.device = torch.device('cuda')
         self.cell = RDBCell(para)
-        self.recons = Reconstructor(para)
+        if para.reconstruction == 'interpolate':
+            self.recons = ReconstructorInterpolate(para)
+        else:
+            self.recons = Reconstructor(para)
         self.fusion = GSA(para)
 
     def forward(self, x, profile_flag=False):
@@ -259,8 +284,12 @@ def cost_profile(model, H, W, seq_length):
 @hydra.main(config_path='../../../config', config_name='config')
 def main(args):
      
-    model = ESTRNN(args)
-    model.eval()
+    model_default = ESTRNN(args)
+    model_default.eval()
+
+    args.estrnn.reconstruction = 'interpolate'
+    model_interpolate = ESTRNN(args)
+    model_interpolate.eval()
     
     import os
     from src.datasets import collateFunction, COCODataset, VideoCOCODataset
@@ -273,35 +302,17 @@ def main(args):
     # get the first batch
     batch = next(iter(dataloader))
 
-    
     for i, batch in enumerate(dataloader):
         if i == 1:
             break
 
-        print(batch)
         print(i, batch[0].size())
-        outputs = model(batch[0])
+        outputs = model_default(batch[0])
         print(outputs.size())
-    
 
-    '''
-    for j in range(10):
-        print(j)
-        img, target = dataset.__getitem__(j)
-        print('before model forward', img.size())
-        img = img.unsqueeze(0)
-        print('before model forward', img.size())
-        # move to gpu
-        rlt = model(img)
-        print(rlt.size())
+        outputs = model_interpolate(batch[0])
+        print(outputs.size())
 
-        
-        from matplotlib import pyplot as plt
-        # rlt size -> torch.Size([1, 1, 1, 288, 384])
-        plt.imshow(rlt.squeeze().cpu().detach().numpy(), cmap='gray')
-        plt.show()
-    '''
-        
-
+  
 if __name__ == '__main__':
     main()

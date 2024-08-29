@@ -4,4 +4,5 @@ estrnn:
   future_frames: 0
   past_frames: 0
   activation: gelu
+  reconstruction: interpolate
   
