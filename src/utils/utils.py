@@ -62,14 +62,14 @@ def load_model(args):
 def load_datasets(args):
     if args.model == 'vsr-yolos' or args.model == 'estrnn-yolos':
         from src.datasets.coco_video import VideoCOCODataset
-        train_dataset = VideoCOCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.trainVideoFrames, args.numFrames, dummy=args.dummy)
-        val_dataset = VideoCOCODataset(args.dataDir, args.valAnnFile, args.numClass, args.valVideoFrames, args.numFrames, dummy=args.dummy)
-        test_dataset = VideoCOCODataset(args.dataDir, args.testAnnFile, args.numClass, args.testVideoFrames, args.numFrames, dummy=args.dummy)
+        train_dataset = VideoCOCODataset(args.dataDir, args.trainAnnFile, args.numClass, args.trainVideoFrames, args.numFrames, dummy=args.dummy, removeBackground=args.cropBackground)
+        val_dataset = VideoCOCODataset(args.dataDir, args.valAnnFile, args.numClass, args.valVideoFrames, args.numFrames, dummy=args.dummy, removeBackground=args.cropBackground)
+        test_dataset = VideoCOCODataset(args.dataDir, args.testAnnFile, args.numClass, args.testVideoFrames, args.numFrames, dummy=args.dummy, removeBackground=args.cropBackground)
         
     else:
         from src.datasets.coco import COCODataset
-        train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass)
-        val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass)
-        test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass)
+        train_dataset = COCODataset(args.dataDir, args.trainAnnFile, args.numClass, removeBackground=args.cropBackground)
+        val_dataset = COCODataset(args.dataDir, args.valAnnFile, args.numClass, removeBackground=args.cropBackground)
+        test_dataset = COCODataset(args.dataDir, args.testAnnFile, args.numClass, removeBackground=args.cropBackground)
 
     return train_dataset, val_dataset, test_dataset

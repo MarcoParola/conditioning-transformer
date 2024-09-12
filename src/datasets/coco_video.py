@@ -123,7 +123,7 @@ def collateFunction(batch: List[Tuple[Tensor, dict]]) -> Tuple[Tensor, Tuple[Dic
 
 
 # TEST MAIN
-@hydra.main(config_path='../../config', config_name='config')
+@hydra.main(config_path='../../config', config_name='config', version_base='1.1')
 def main(args):
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
