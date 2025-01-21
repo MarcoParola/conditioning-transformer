@@ -4,6 +4,7 @@ defaults:
   - enhancer
   - yolos
   - estrnn
+  - yolov5
   
 seed: 42
 numGroups: 8
@@ -29,13 +30,12 @@ numBlocks:
 inChans: 1
 
 # MARK: - yolo dataset
-targetHeight: 608
-targetWidth: 608
+targetHeight: 512 #288
+targetWidth: 512 #384
 
 # MARK: - miscellaneous
 device: cuda
 weight: ""
-
 
 # MARK: - training config
 lr: 5e-7
@@ -79,7 +79,7 @@ multi: False
 amp: False
 
 # MARK: - wandb
-wandbEntity: marcoparola
+wandbEntity: Null
 wandbProject: conditioning-transformer
 
 inference:

@@ -1,0 +1,14 @@
+# Ultralytics YOLOv5 🚀, AGPL-3.0 license
+yolo: 
+  # Parameters
+  depth_multiple: 1.0 # model depth multiple
+  width_multiple: 1.0 # layer channel multiple
+  match_thresh: 4
+  giou_ratio: 1
+  score_thresh: 0.1
+  nms_thresh: 0.6
+  detections: 100
+  anchors:
+    - [10, 13, 16, 30, 33, 23] # P3/8
+    - [30, 61, 62, 45, 59, 119] # P4/16
+    - [116, 90, 156, 198, 373, 326] # P5/32
