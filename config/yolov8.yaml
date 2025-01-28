@@ -1,0 +1,17 @@
+# Ultralytics YOLOv5 🚀, AGPL-3.0 license
+yolo: 
+  # #YOLOv8n
+  # depth: [1, 2, 2]
+  # width: [3, 16, 32, 64, 128, 256]
+  # #YOLOv8s
+  # depth: [1, 2, 2]
+  # width: [3, 32, 64, 128, 256, 512]
+  # #YOLOv8m
+  # depth: [1, 2, 2]
+  # width: [3, 32, 64, 128, 256, 512]
+  # #YOLOv8l
+  # depth: [2, 4, 4]
+  # width: [3, 48, 96, 192, 384, 576]
+  #YOLOv8x
+  depth: [3, 6, 6]
+  width: [3, 64, 128, 256, 512, 512]

@@ -44,9 +44,9 @@ def load_model(args):
     elif args.model == 'estrnn-yolos':
         from src.models.yolos.estrnn_yolos import ESTRNNYolos
         model = ESTRNNYolos(args)
-    elif args.model == 'yolov5': 
-        from src.models.yolo.yolo import YOLOv5
-        model = YOLOv5(args)
+    elif args.model == 'yolov8': 
+        from src.models.yolo.yolo import YOLOv8
+        model = YOLOv8(args)
     else:
         raise ValueError(f'unknown model: {args.model}')
 
