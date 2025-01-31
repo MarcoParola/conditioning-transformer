@@ -65,7 +65,6 @@ class Conv(torch.nn.Module):
     def fuse_forward(self, x):
         return self.relu(self.conv(x))
 
-
 class Residual(torch.nn.Module):
     def __init__(self, ch, add=True):
         super().__init__()
@@ -75,7 +74,6 @@ class Residual(torch.nn.Module):
 
     def forward(self, x):
         return self.res_m(x) + x if self.add_m else self.res_m(x)
-
 
 class CSP(torch.nn.Module):
     def __init__(self, in_ch, out_ch, n=1, add=True):
@@ -90,7 +88,6 @@ class CSP(torch.nn.Module):
         y.extend(m(y[-1]) for m in self.res_m)
         return self.conv3(torch.cat(y, dim=1))
 
-
 class SPP(torch.nn.Module):
     def __init__(self, in_ch, out_ch, k=5):
         super().__init__()
@@ -103,7 +100,6 @@ class SPP(torch.nn.Module):
         y1 = self.res_m(x)
         y2 = self.res_m(y1)
         return self.conv2(torch.cat([x, y1, y2, self.res_m(y2)], 1))
-
 
 class DarkNet(torch.nn.Module):
     def __init__(self, width, depth):
@@ -133,7 +129,6 @@ class DarkNet(torch.nn.Module):
         p5 = self.p5(p4)
         return p3, p4, p5
 
-
 class DarkFPN(torch.nn.Module):
     def __init__(self, width, depth):
         super().__init__()
@@ -153,7 +148,6 @@ class DarkFPN(torch.nn.Module):
         h6 = self.h6(torch.cat([self.h5(h4), p5], 1))
         return h2, h4, h6
 
-
 class DFL(torch.nn.Module):
     # Integral module of Distribution Focal Loss (DFL)
     # Generalized Focal Loss https://ieeexplore.ieee.org/document/9792391
@@ -168,7 +162,6 @@ class DFL(torch.nn.Module):
         b, c, a = x.shape
         x = x.view(b, 4, self.ch, a).transpose(2, 1)
         return self.conv(x.softmax(1)).view(b, 4, a)
-
 
 class Head(torch.nn.Module):
     anchors = torch.empty(0)
@@ -225,12 +218,15 @@ class YOLOv8(torch.nn.Module):
         width = args["yolo"]["width"]
         depth = args["yolo"]["depth"]
         super().__init__()
+
+        width[0] = args.inChans
+
         self.net = DarkNet(width, depth)
         self.fpn = DarkFPN(width, depth)
 
-        img_dummy = torch.zeros(1, 3, 256, 256)
+        img_dummy = torch.zeros(args.batchSize, args.inChans, args.targetWidth, args.targetHeight)
         self.head = Head(num_classes, (width[3], width[4], width[5]))
-        self.head.stride = torch.tensor([256 / x.shape[-2] for x in self.forward(img_dummy)])
+        self.head.stride = torch.tensor([args.targetWidth / x.shape[-2] for x in self.forward(img_dummy)])
         self.stride = self.head.stride
         self.head.initialize_biases()
 
@@ -248,117 +244,23 @@ class YOLOv8(torch.nn.Module):
                 delattr(m, 'norm')
         return self
 
-class YoloCriterion:
-    def __init__(self, model, params):
-        super().__init__()
-        if hasattr(model, 'module'):
-            model = model.module
-
-        device = next(model.parameters()).device  # get model device
-
-        m = model.head  # Head() module
-        self.bce = torch.nn.BCEWithLogitsLoss(reduction='none')
-        self.stride = m.stride  # model strides
-        self.nc = m.nc  # number of classes
-        self.no = m.no
-        self.device = device
-        self.params = params
-
-        # task aligned assigner
-        self.top_k = 10
-        self.alpha = 0.5
-        self.beta = 6.0
-        self.eps = 1e-9
-
-        self.bs = 1
-        self.num_max_boxes = 0
-        # DFL Loss params
-        self.dfl_ch = m.dfl.ch
-        self.project = torch.arange(self.dfl_ch, dtype=torch.float, device=device)
-
-    def __call__(self, outputs, targets):
-        x = outputs[1] if isinstance(outputs, tuple) else outputs
-        output = torch.cat([i.view(x[0].shape[0], self.no, -1) for i in x], 2)
-        pred_output, pred_scores = output.split((4 * self.dfl_ch, self.nc), 1)
-
-        pred_output = pred_output.permute(0, 2, 1).contiguous()
-        pred_scores = pred_scores.permute(0, 2, 1).contiguous()
-
-        size = torch.tensor(x[0].shape[2:], dtype=pred_scores.dtype, device=self.device)
-        size = size * self.stride[0]
-
-        anchor_points, stride_tensor = make_anchors(x, self.stride, 0.5)
-
-        # targets
-        if targets.shape[0] == 0:
-            gt = torch.zeros(pred_scores.shape[0], 0, 5, device=self.device)
-        else:
-            i = targets[:, 0]  # image index
-            _, counts = i.unique(return_counts=True)
-            gt = torch.zeros(pred_scores.shape[0], counts.max(), 5, device=self.device)
-            for j in range(pred_scores.shape[0]):
-                matches = i == j
-                n = matches.sum()
-                if n:
-                    gt[j, :n] = targets[matches, 1:]
-            gt[..., 1:5] = wh2xy(gt[..., 1:5].mul_(size[[1, 0, 1, 0]]))
-
-        gt_labels, gt_bboxes = gt.split((1, 4), 2)  # cls, xyxy
-        mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0)
-
-        # boxes
-        b, a, c = pred_output.shape
-        pred_bboxes = pred_output.view(b, a, 4, c // 4).softmax(3)
-        pred_bboxes = pred_bboxes.matmul(self.project.type(pred_bboxes.dtype))
-
-        a, b = torch.split(pred_bboxes, 2, -1)
-        pred_bboxes = torch.cat((anchor_points - a, anchor_points + b), -1)
-
-        scores = pred_scores.detach().sigmoid()
-        bboxes = (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype)
-        target_bboxes, target_scores, fg_mask = self.assign(scores, bboxes,
-                                                            gt_labels, gt_bboxes, mask_gt,
-                                                            anchor_points * stride_tensor)
-
-        target_bboxes /= stride_tensor
-        target_scores_sum = target_scores.sum()
-
-        # cls loss
-        loss_cls = self.bce(pred_scores, target_scores.to(pred_scores.dtype))
-        loss_cls = loss_cls.sum() / target_scores_sum
-
-        # box loss
-        loss_box = torch.zeros(1, device=self.device)
-        loss_dfl = torch.zeros(1, device=self.device)
-        if fg_mask.sum():
-            # IoU loss
-            weight = torch.masked_select(target_scores.sum(-1), fg_mask).unsqueeze(-1)
-            loss_box = self.iou(pred_bboxes[fg_mask], target_bboxes[fg_mask])
-            loss_box = ((1.0 - loss_box) * weight).sum() / target_scores_sum
-            # DFL loss
-            a, b = torch.split(target_bboxes, 2, -1)
-            target_lt_rb = torch.cat((anchor_points - a, b - anchor_points), -1)
-            target_lt_rb = target_lt_rb.clamp(0, self.dfl_ch - 1.01)  # distance (left_top, right_bottom)
-            loss_dfl = self.df_loss(pred_output[fg_mask].view(-1, self.dfl_ch), target_lt_rb[fg_mask])
-            loss_dfl = (loss_dfl * weight).sum() / target_scores_sum
-
-        loss_cls *= self.params['cls']
-        loss_box *= self.params['box']
-        loss_dfl *= self.params['dfl']
-        return loss_cls + loss_box + loss_dfl  # loss(cls, box, dfl)
-
 if __name__ == '__main__':
-    model = YOLOv8(
+    import hydra
+    cfg= hydra.utils.instantiate(
         {
-            "numClass": 4,
-            "yolo": {
-                "depth": [3, 6, 6],
-                "width": [3, 64, 128, 256, 512, 512],
+                "numClass": 4,
+                "batchSize": 2,
+                "inChans": 1,
+                "targetWidth": 512,
+                "targetHeight":512,
+                "yolo": {
+                    "depth": [3, 6, 6],
+                    "width": [3, 64, 128, 256, 512, 512],
+                }
             }
-        }
     )
+    model = YOLOv8(cfg)
 
+    inp = torch.rand((cfg.batchSize ,cfg.inChans, cfg.targetWidth,cfg.targetHeight))
     model.eval()
-
-    inp = torch.rand((8,3,512,512))
-    out = model(inp)
+    print(model(inp).shape)

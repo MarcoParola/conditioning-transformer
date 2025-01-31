@@ -30,8 +30,15 @@ numBlocks:
 inChans: 1
 
 # MARK: - yolo dataset
-targetHeight: 512 #288
-targetWidth: 512 #384
+targetHeight: 384 #512 #288
+targetWidth: 384 #512 #384
+
+#classes
+classes:
+  0: person
+  1: bicycle
+  2: motorcycle
+  3: vehicle
 
 # MARK: - miscellaneous
 device: cuda
@@ -40,7 +47,7 @@ weight: ""
 # MARK: - training config
 lr: 5e-7
 lrBackbone: 1e-5
-batchSize: 8
+batchSize: 7
 weightDecay: 1e-4
 epochs: 100
 lrDrop: 1000
@@ -48,17 +55,18 @@ clipMaxNorm: .1
 patience: 15
 
 # MARK: - loss
-classCost: .005
-bboxCost: 5.
+classCost: 0.5 #.005
+bboxCost: 7.5 #5.
 giouCost: 2.5
 eosCost: .1
+dlfCost: 1.5
 
 # MARK: - dataset
 cropBackground: False
-dataDir: ${hydra:runtime.cwd}/data/
-trainAnnFile: ${hydra:runtime.cwd}/data/new/Train.json
-valAnnFile: ${hydra:runtime.cwd}/data/new/Valid.json
-testAnnFile: ${hydra:runtime.cwd}/data/new/Test.json
+dataDir: /Data/Harborfront_raw/
+trainAnnFile: /Data/Harborfront_raw/coco_annotations/Valid.json
+valAnnFile: /Data/Harborfront_raw/coco_annotations/Valid.json
+testAnnFile: /Data/Harborfront_raw/coco_annotations/Test.json
 
 # MARK: - video dataset
 trainVideoFrames: ${hydra:runtime.cwd}/data/new/videoFrames/Train

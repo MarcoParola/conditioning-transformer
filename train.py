@@ -48,8 +48,8 @@ def main(args):
         num_workers=args.numWorkers)
     
     # set model and criterion, load weights if available
-    criterion = SetCriterion(args).to(device)
-    model = load_model(args).to(device)    
+    model = load_model(args).to(device)
+    criterion = SetCriterion(args, model).to(device)    
 
     # separate learning rate
     paramDicts = [
