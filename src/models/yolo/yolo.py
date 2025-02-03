@@ -2,6 +2,7 @@
 
 import math
 import torch
+from torchvision.ops import nms
 
 def pad(k, p=None, d=1):
     if d > 1:
@@ -9,6 +10,49 @@ def pad(k, p=None, d=1):
     if p is None:
         p = k // 2
     return p
+
+def non_max_suppression(prediction, conf_threshold=0.25, iou_threshold=0.45):
+    nc = prediction.shape[1] - 4  # number of classes
+    xc = prediction[:, 4:4 + nc].amax(1) > conf_threshold  # candidates
+
+    # Settings
+    max_wh = 7680  # (pixels) maximum box width and height
+    max_det = 300  # the maximum number of boxes to keep after NMS
+    max_nms = 30000  # maximum number of boxes into torchvision.ops.nms()
+
+    outputs = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]
+    for index, x in enumerate(prediction):  # image index, image inference
+        # Apply constraints
+        x = x.transpose(0, -1)[xc[index]]  # confidence
+
+        # If none remain process next image
+        if not x.shape[0]:
+            continue
+
+        # Detections matrix nx6 (box, conf, cls)
+        box, cls = x.split((4, nc), 1)
+        # center_x, center_y, width, height) to (x1, y1, x2, y2)
+        box = wh2xy(box)
+        if nc > 1:
+            i, j = (cls > conf_threshold).nonzero(as_tuple=False).T
+            x = torch.cat((box[i], x[i, 4 + j, None], j[:, None].float()), 1)
+        else:  # best class only
+            conf, j = cls.max(1, keepdim=True)
+            x = torch.cat((box, conf, j.float()), 1)[conf.view(-1) > conf_threshold]
+        # Check shape
+        if not x.shape[0]:  # no boxes
+            continue
+        # sort by confidence and remove excess boxes
+        x = x[x[:, 4].argsort(descending=True)[:max_nms]]
+
+        # Batched NMS
+        c = x[:, 5:6] * max_wh  # classes
+        boxes, scores = x[:, :4] + c, x[:, 4]  # boxes (offset by class), scores
+        i = nms(boxes, scores, iou_threshold)  # NMS
+        i = i[:max_det]  # limit detections
+        outputs[index] = x[i]
+
+    return outputs
 
 def make_anchors(x, strides, offset=0.5):
     """
@@ -262,5 +306,10 @@ if __name__ == '__main__':
     model = YOLOv8(cfg)
 
     inp = torch.rand((cfg.batchSize ,cfg.inChans, cfg.targetWidth,cfg.targetHeight))
+    print("EVAL")
     model.eval()
     print(model(inp).shape)
+    print("TRAIN")
+    model.train()
+    for k in model(inp):
+        print(k.shape)

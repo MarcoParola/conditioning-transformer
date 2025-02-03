@@ -15,3 +15,7 @@ yolo:
   #YOLOv8x
   depth: [3, 6, 6]
   width: [3, 64, 128, 256, 512, 512]
+
+  #NMS settings
+  conf_thres: 0.5
+  iou_thres: 0.65
