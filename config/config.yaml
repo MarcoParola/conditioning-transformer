@@ -59,7 +59,6 @@ classCost: 0.5 #.005
 bboxCost: 7.5 #5.
 giouCost: 2.5
 eosCost: .1
-dlfCost: 1.5
 
 # MARK: - dataset
 cropBackground: False
