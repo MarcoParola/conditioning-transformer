@@ -38,17 +38,17 @@ def fuse_conv(conv, norm):
 
     return fused_conv
 
-def non_max_suppression(outputs, confidence_threshold=0.001, iou_threshold=0.7, max_det=300):
+def non_max_suppression(predictions, confidence_threshold=0.001, iou_threshold=0.7, max_det=300):
     max_wh = 7680
     max_nms = 30000
 
-    bs = outputs.shape[0]  # batch size
-    nc = outputs.shape[1] - 4  # number of classes
-    xc = outputs[:, 4:4 + nc].amax(1) > confidence_threshold  # candidates
+    bs = predictions.shape[0]  # batch size
+    nc = predictions.shape[1] - 4  # number of classes
+    xc = predictions[:, 4:4 + nc].amax(1) > confidence_threshold  # candidates
 
     # Settings
-    output = [torch.zeros((0, 6), device=outputs.device)] * bs
-    for index, x in enumerate(outputs):  # image index, image inference
+    output = [torch.zeros((0, 6), device=predictions.device)] * bs
+    for index, x in enumerate(predictions):  # image index, image inference
         x = x.transpose(0, -1)[xc[index]]  # confidence
 
         # If none remain process next image
@@ -245,7 +245,7 @@ class YOLOv8(torch.nn.Module):
     '''
     Note model output varies based on model state:
         - model.train(): i.e. model.training == True,  will return a list of anchor outputs for all stages (P3, P4, P5)
-        - model.eval() : i.e. model.training == False, will return a dict of {labels: [batch, class], boxes: [cx, cy, w, h]}
+        - model.eval() : i.e. model.training == False, will return a dict of {labels: [batch, class], scores:[batch, class] , boxes: [cx, cy, w, h]}
     '''
     def __init__(self, args):
         num_classes = args.numClass
@@ -275,7 +275,10 @@ class YOLOv8(torch.nn.Module):
             return self.head(list(x))
         else:
             x = torch.stack(non_max_suppression(self.head(list(x)), self.conf_thres, self.iou_thres, self.max_dets), 0)
-            return {"labels": x[:,:,0], "boxes": x[:,:,1:],}
+            return {"labels": x[:,:,5],
+                    "scores": x[:,:,4],
+                    "boxes" : x[:,:,:4],
+                     }
 
     def fuse(self):
         for m in self.modules():
